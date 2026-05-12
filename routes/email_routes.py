@@ -59,7 +59,11 @@ def verify_otp():
     # Verify OTP
     result = check_email_otp(email, otp, purpose=purpose)
     if not result['valid']:
-        return jsonify({'error': result['message']}), 400
+        # Before
+     return jsonify({'error': result['message']}), 400
+
+# After
+    return jsonify({'error': result['error']}), 400
 
     # Create account
     if get_user_by_email(email):

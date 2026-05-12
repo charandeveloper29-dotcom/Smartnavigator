@@ -20,16 +20,16 @@ def generate_otp():
     return ''.join([str(random.randint(0, 9)) for _ in range(6)])
 
 def send_otp_email(to_email, otp, user_name=''):
-    """Send OTP via Gmail"""
+    """Send OTP via Gmail. Returns (success: bool, message: str)."""
     if not GMAIL_USER or not GMAIL_APP_PASSWORD:
-        raise Exception('Gmail not configured')
-    
+        return False, 'Gmail not configured'
+
     try:
         msg = MIMEMultipart('alternative')
         msg['Subject'] = f'Your Smart Navigator OTP: {otp}'
         msg['From'] = GMAIL_USER
         msg['To'] = to_email
-        
+
         html = f'''
         <html><body style="font-family:Arial,sans-serif;padding:40px 20px;background:#f5f5f5">
         <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1)">
@@ -51,17 +51,20 @@ def send_otp_email(to_email, otp, user_name=''):
         </div>
         </body></html>
         '''
-        
+
         msg.attach(MIMEText(html, 'html'))
-        
+
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
             server.send_message(msg)
-        
-        return True
+
+        # FIX 1: return a tuple instead of a plain bool
+        return True, 'OTP sent successfully'
+
     except Exception as e:
         print(f'Email send failed: {e}')
-        raise
+        # FIX 1: return a tuple instead of re-raising
+        return False, str(e)
 
 def store_email_otp(email, otp, purpose='register'):
     """Store OTP in database"""
@@ -74,6 +77,7 @@ def store_email_otp(email, otp, purpose='register'):
     )
     db.commit()
 
+# FIX 2: removed duplicate check_email_otp — keep only this one (with purpose param)
 def check_email_otp(email, otp, purpose='register'):
     """Verify OTP"""
     db = get_db()
@@ -81,51 +85,23 @@ def check_email_otp(email, otp, purpose='register'):
         'SELECT * FROM otp_sessions WHERE email = ? AND purpose = ? ORDER BY created_at DESC LIMIT 1',
         (email, purpose)
     ).fetchone()
-    
-    if not session:
-        return {'valid': False, 'error': 'No OTP found'}
-    
-    session = dict(session)
-    expires_at = datetime.fromisoformat(session['expires_at'])
-    if datetime.now() > expires_at:
-        return {'valid': False, 'error': 'OTP expired'}
-    
-    if session['attempts'] >= OTP_MAX_ATTEMPTS:
-        return {'valid': False, 'error': 'Too many attempts'}
-    
-    if session['otp'] != otp:
-        db.execute('UPDATE otp_sessions SET attempts = attempts + 1 WHERE id = ?', (session['id'],))
-        db.commit()
-        return {'valid': False, 'error': 'Invalid OTP'}
-    
-    db.execute('DELETE FROM otp_sessions WHERE id = ?', (session['id'],))
-    db.commit()
-    return {'valid': True}
 
-def check_email_otp(email, otp):
-    """Verify OTP"""
-    db = get_db()
-    session = db.execute(
-        'SELECT * FROM otp_sessions WHERE email = ? ORDER BY created_at DESC LIMIT 1',
-        (email,)
-    ).fetchone()
-    
     if not session:
         return {'valid': False, 'error': 'No OTP found'}
-    
+
     session = dict(session)
     expires_at = datetime.fromisoformat(session['expires_at'])
     if datetime.now() > expires_at:
         return {'valid': False, 'error': 'OTP expired'}
-    
+
     if session['attempts'] >= OTP_MAX_ATTEMPTS:
         return {'valid': False, 'error': 'Too many attempts'}
-    
+
     if session['otp'] != otp:
         db.execute('UPDATE otp_sessions SET attempts = attempts + 1 WHERE id = ?', (session['id'],))
         db.commit()
         return {'valid': False, 'error': 'Invalid OTP'}
-    
+
     db.execute('DELETE FROM otp_sessions WHERE id = ?', (session['id'],))
     db.commit()
     return {'valid': True}
