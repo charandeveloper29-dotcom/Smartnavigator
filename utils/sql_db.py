@@ -85,16 +85,18 @@ def init_db(db_path):
     ''')
     
     # Create otp_sessions table
+    # Create otp_sessions table
     db.execute('''
-        CREATE TABLE IF NOT EXISTS otp_sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL,
-            otp TEXT NOT NULL,
-            attempts INTEGER DEFAULT 0,
-            expires_at TIMESTAMP NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+    CREATE TABLE IF NOT EXISTS otp_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        otp TEXT NOT NULL,
+        purpose TEXT DEFAULT 'register',
+        attempts INTEGER DEFAULT 0,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')    
     
     db.commit()
     db.close()

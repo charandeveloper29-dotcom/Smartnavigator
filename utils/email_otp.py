@@ -63,16 +63,44 @@ def send_otp_email(to_email, otp):
         print(f'Email send failed: {e}')
         raise
 
-def store_email_otp(email, otp):
+def store_email_otp(email, otp, purpose='register'):
     """Store OTP in database"""
     db = get_db()
     expires_at = datetime.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
     db.execute('DELETE FROM otp_sessions WHERE email = ?', (email,))
     db.execute(
-        'INSERT INTO otp_sessions (email, otp, attempts, expires_at) VALUES (?, ?, 0, ?)',
-        (email, otp, expires_at)
+        'INSERT INTO otp_sessions (email, otp, purpose, attempts, expires_at) VALUES (?, ?, ?, 0, ?)',
+        (email, otp, purpose, expires_at)
     )
     db.commit()
+
+def check_email_otp(email, otp, purpose='register'):
+    """Verify OTP"""
+    db = get_db()
+    session = db.execute(
+        'SELECT * FROM otp_sessions WHERE email = ? AND purpose = ? ORDER BY created_at DESC LIMIT 1',
+        (email, purpose)
+    ).fetchone()
+    
+    if not session:
+        return {'valid': False, 'error': 'No OTP found'}
+    
+    session = dict(session)
+    expires_at = datetime.fromisoformat(session['expires_at'])
+    if datetime.now() > expires_at:
+        return {'valid': False, 'error': 'OTP expired'}
+    
+    if session['attempts'] >= OTP_MAX_ATTEMPTS:
+        return {'valid': False, 'error': 'Too many attempts'}
+    
+    if session['otp'] != otp:
+        db.execute('UPDATE otp_sessions SET attempts = attempts + 1 WHERE id = ?', (session['id'],))
+        db.commit()
+        return {'valid': False, 'error': 'Invalid OTP'}
+    
+    db.execute('DELETE FROM otp_sessions WHERE id = ?', (session['id'],))
+    db.commit()
+    return {'valid': True}
 
 def check_email_otp(email, otp):
     """Verify OTP"""
