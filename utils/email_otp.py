@@ -19,7 +19,7 @@ def generate_otp():
     """Generate 6-digit OTP"""
     return ''.join([str(random.randint(0, 9)) for _ in range(6)])
 
-def send_otp_email(to_email, otp):
+def send_otp_email(to_email, otp, user_name=''):
     """Send OTP via Gmail"""
     if not GMAIL_USER or not GMAIL_APP_PASSWORD:
         raise Exception('Gmail not configured')
@@ -37,7 +37,7 @@ def send_otp_email(to_email, otp):
         <h1 style="color:white;margin:0;font-size:28px">🧭 Smart Navigator</h1>
         </div>
         <div style="padding:40px 30px">
-        <h2 style="color:#1A1614;margin:0 0 20px">Your Verification Code</h2>
+        <h2 style="color:#1A1614;margin:0 0 20px">{"Hi " + user_name + "!" if user_name else "Welcome!"}</h2>
         <p style="color:#666;font-size:15px;line-height:1.6;margin-bottom:30px">
         Enter this code to complete your registration:
         </p>
