@@ -28,7 +28,7 @@ def send_otp():
 
     # Generate and store OTP
     otp = generate_otp()
-    store_email_otp(email, otp)
+    store_email_otp(email, otp, purpose=purpose)
 
     # Send via Gmail SMTP
     success, message = send_otp_email(email, otp, user_name=name)
