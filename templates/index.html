@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Navigator - Discover Amazing Places</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1A1614 0%, #2d2520 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(26, 22, 20, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #C9A84C;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: #C9A84C;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #C9A84C, #F4E5B7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: #d4d4d4;
+            margin-bottom: 2rem;
+        }
+        
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            border: 2px solid #C9A84C;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #F4E5B7;
+        }
+        
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .places-grid {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .place-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+        
+        .place-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(201, 168, 76, 0.3);
+        }
+        
+        .place-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #2d2520, #1A1614);
+        }
+        
+        .place-info {
+            padding: 1.5rem;
+        }
+        
+        .place-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #C9A84C;
+        }
+        
+        .place-location {
+            color: #b4b4b4;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .place-rating {
+            color: #F4E5B7;
+            font-size: 0.9rem;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #C9A84C, #F4E5B7);
+            color: #1A1614;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: transform 0.3s;
+        }
+        
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: #C9A84C;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">🧭 Smart Navigator</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/explore">Explore</a></li>
+            {% if current_user %}
+                <li><a href="/profile">Profile</a></li>
+                <li><a href="/saved">Saved</a></li>
+            {% else %}
+                <li><a href="/login">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <h1>Discover Amazing Places</h1>
+        <p>Explore the best destinations across India with Smart Navigator</p>
+        <div class="search-box">
+            <form action="/search" method="GET">
+                <input type="text" name="q" placeholder="Search for places, cities, or experiences..." />
+            </form>
+        </div>
+    </section>
+
+    <section class="places-section">
+        <h2 class="section-title">Featured Destinations</h2>
+        <div class="places-grid">
+            {% if places %}
+                {% for place in places %}
+                <div class="place-card">
+                    {% if place.images %}
+                        <img src="{{ place.images.split(',')[0] }}" alt="{{ place.name }}" class="place-image">
+                    {% else %}
+                        <div class="place-image"></div>
+                    {% endif %}
+                    <div class="place-info">
+                        <h3 class="place-name">{{ place.name }}</h3>
+                        <p class="place-location">📍 {{ place.city }}, {{ place.state }}</p>
+                        <p class="place-rating">⭐ {{ place.rating }}</p>
+                        <a href="/places/{{ place.id }}" class="cta-button">View Details</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #b4b4b4; text-align: center; grid-column: 1 / -1;">
+                    No places found. Check back soon!
+                </p>
+            {% endif %}
+        </div>
+    </section>
+</body>
+</html>

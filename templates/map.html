@@ -1,0 +1,1099 @@
+{% extends "base.html" %}
+{% block title %}Map Explorer – Smart Navigator{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* ── Full page map layout ────────────────────────── */
+.map-page {
+  height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1a1a2e;
+}
+
+/* ── TOP UNIFIED SEARCH + CONTROLS BAR ─────────── */
+.map-top-bar {
+  background: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  z-index: 400;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+
+/* ── BIG UNIFIED SEARCH BOX ─────────────────────── */
+.unified-search {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+  max-width: 560px;
+}
+.unified-search-box {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 30px;
+  padding: 8px 14px;
+  gap: 8px;
+  transition: all .2s;
+}
+.unified-search-box:focus-within {
+  border-color: #C9A84C;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(201,168,76,.15);
+}
+.unified-search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: #1A1614;
+  font-family: inherit;
+}
+.unified-search-box input::placeholder { color: #aaa; }
+.search-clear-btn {
+  background: none; border: none; cursor: pointer;
+  color: #aaa; font-size: 16px; padding: 0 2px;
+  display: none;
+}
+
+/* ── AUTOCOMPLETE DROPDOWN ──────────────────────── */
+.search-autocomplete {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  z-index: 9999;
+  overflow: hidden;
+  max-height: 420px;
+  overflow-y: auto;
+  display: none;
+}
+.search-autocomplete.open { display: block; }
+.ac-section-label {
+  padding: 8px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+.ac-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background .12s;
+}
+.ac-result:last-child { border-bottom: none; }
+.ac-result:hover { background: #FDF6E9; }
+.ac-result-img {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f0f0f0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  overflow: hidden;
+}
+.ac-result-img img { width:100%; height:100%; object-fit:cover; border-radius:10px; }
+.ac-result-info { flex: 1; min-width: 0; }
+.ac-result-name { font-weight: 600; font-size: 13px; color: #1A1614; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ac-result-loc  { font-size: 11px; color: #888; margin-top: 1px; }
+.ac-result-type { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #f0f0f0; color: #666; white-space: nowrap; flex-shrink: 0; }
+.ac-result-type.saved { background: #FDF6E9; color: #B8863A; }
+.ac-no-results { padding: 20px 16px; text-align: center; color: #999; font-size: 13px; }
+
+/* ── LAYER / VIEW TOGGLE ────────────────────────── */
+.view-toggle {
+  display: flex;
+  gap: 4px;
+  background: #f5f5f5;
+  border-radius: 20px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+.view-btn {
+  padding: 6px 14px;
+  border-radius: 17px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #666;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.view-btn.active { background: white; color: #1A1614; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+
+/* ── CAT FILTER PILLS ───────────────────────────── */
+.cat-filter-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.cat-filter-row::-webkit-scrollbar { display: none; }
+.cat-pill {
+  padding: 5px 13px;
+  border-radius: 20px;
+  border: 1.5px solid #e0e0e0;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+  color: #555;
+}
+.cat-pill.active, .cat-pill:hover {
+  background: #C9A84C;
+  border-color: #C9A84C;
+  color: white;
+}
+
+/* ── MAP CONTAINER ──────────────────────────────── */
+.map-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+#mainMap {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── PLACE DETAIL SIDE PANEL ────────────────────── */
+.detail-panel {
+  position: absolute;
+  top: 12px; left: 12px;
+  width: 340px;
+  max-height: calc(100% - 24px);
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.22);
+  z-index: 500;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-380px);
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+}
+.detail-panel.open { transform: translateX(0); }
+
+.dp-close {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.45);
+  color: white;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+}
+.dp-hero {
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.dp-hero-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dp-hero-bg {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 4rem;
+}
+.dp-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 55%);
+}
+.dp-hero-info {
+  position: absolute; bottom: 12px; left: 14px; right: 40px; color: white;
+}
+.dp-cat-badge {
+  background: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.35);
+  padding: 2px 9px; border-radius: 10px;
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  display: inline-block; margin-bottom: 5px;
+}
+.dp-place-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 700;
+  line-height: 1.2;
+}
+.dp-place-loc { font-size: 11px; opacity: .8; margin-top: 2px; }
+
+.dp-body { padding: 16px; overflow-y: auto; flex: 1; }
+.dp-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 14px;
+}
+.dp-stat {
+  background: #F5F2EE; border-radius: 10px; padding: 10px;
+  text-align: center;
+}
+.dp-stat-val { font-size: 15px; font-weight: 700; color: #1A1614; display: block; }
+.dp-stat-lbl { font-size: 10px; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: .04em; }
+.dp-desc {
+  font-size: 12px; color: #555; line-height: 1.7;
+  margin-bottom: 14px;
+  max-height: 90px; overflow-y: auto;
+}
+.dp-info-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #444; padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.dp-info-row:last-of-type { border-bottom: none; }
+.dp-info-icon { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+.dp-actions { display: flex; gap: 8px; margin-top: 14px; }
+.dp-btn-primary {
+  flex: 1; padding: 10px; background: #C9A84C; color: white;
+  border: none; border-radius: 10px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: background .2s;
+  text-align: center; text-decoration: none; display: flex;
+  align-items: center; justify-content: center; gap: 6px;
+}
+.dp-btn-primary:hover { background: #9B7C30; }
+.dp-btn-secondary {
+  padding: 10px 14px; background: white; color: #1A1614;
+  border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.dp-btn-secondary:hover { border-color: #C9A84C; color: #C9A84C; }
+
+/* Photo gallery strip */
+.dp-gallery {
+  display: flex; gap: 6px; overflow-x: auto;
+  margin-bottom: 12px; scrollbar-width: none;
+}
+.dp-gallery::-webkit-scrollbar { display: none; }
+.dp-gallery-thumb {
+  width: 70px; height: 55px; border-radius: 8px;
+  object-fit: cover; flex-shrink: 0; cursor: pointer;
+  transition: transform .15s;
+}
+.dp-gallery-thumb:hover { transform: scale(1.06); }
+
+/* Wikipedia info box */
+.dp-wiki-box {
+  background: #F8F6F0;
+  border-left: 3px solid #C9A84C;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: #555;
+  line-height: 1.6;
+}
+.dp-wiki-title { font-weight: 700; font-size: 12px; color: #1A1614; margin-bottom: 4px; }
+
+/* ── BOTTOM ZOOM CONTROLS ───────────────────────── */
+.map-bottom-controls {
+  position: absolute;
+  bottom: 20px; right: 14px;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.map-ctrl-btn {
+  width: 40px; height: 40px;
+  background: white;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  color: #333;
+}
+.map-ctrl-btn:hover { background: #FDF6E9; transform: scale(1.05); }
+
+/* ── PLACES MINI LIST ───────────────────────────── */
+.places-mini-panel {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 280px;
+  max-height: calc(100% - 24px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  z-index: 400;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .3s;
+}
+.places-mini-panel.hidden { transform: translateX(320px); }
+.pmp-header {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.pmp-title { font-weight: 700; font-size: 14px; color: #1A1614; }
+.pmp-count { font-size: 11px; color: #999; background: #f5f5f5; padding: 2px 8px; border-radius: 10px; }
+.pmp-list { overflow-y: auto; flex: 1; }
+.pmp-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f8f8f8;
+  transition: background .12s;
+  text-decoration: none; color: #1A1614;
+}
+.pmp-item:hover, .pmp-item.active { background: #FDF6E9; }
+.pmp-img {
+  width: 42px; height: 42px; border-radius: 8px;
+  object-fit: cover; flex-shrink: 0;
+  background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 18px;
+  overflow: hidden;
+}
+.pmp-img img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
+.pmp-info { flex: 1; min-width: 0; }
+.pmp-name { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pmp-loc  { font-size: 10px; color: #999; }
+.pmp-rating { font-size: 10px; color: #C9A84C; font-weight: 700; }
+
+/* ── LOADING SPINNER ────────────────────────────── */
+.map-loading {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,.85);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 600;
+}
+.spinner-ring {
+  width: 44px; height: 44px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #C9A84C;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin-bottom: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.map-loading p { font-size: 13px; color: #888; }
+
+/* ── CUSTOM LEAFLET POPUP ───────────────────────── */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: 0 6px 28px rgba(0,0,0,.2) !important;
+  border: none !important;
+}
+.leaflet-popup-content { margin: 0 !important; width: 220px !important; }
+.leaflet-popup-tip-container { display: none; }
+.map-popup-card { font-family: 'DM Sans', sans-serif; }
+.mpc-img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.mpc-body { padding: 12px 14px; }
+.mpc-name { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; margin-bottom: 3px; color: #1A1614; }
+.mpc-loc  { font-size: 11px; color: #888; margin-bottom: 8px; }
+.mpc-row  { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.mpc-chip { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #f5f5f5; color: #555; }
+.mpc-chip.free { background: #E8F5E9; color: #2D6A4F; }
+.mpc-open-btn {
+  display: block; text-align: center; width: 100%;
+  padding: 8px; background: #C9A84C; color: white;
+  text-decoration: none; font-size: 12px; font-weight: 700;
+  transition: background .2s; border-radius: 0 0 0 0;
+}
+.mpc-open-btn:hover { background: #9B7C30; }
+
+/* ── INFO TOAST ─────────────────────────────────── */
+.map-toast {
+  position: absolute;
+  bottom: 70px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(26,22,20,.88);
+  color: white; padding: 10px 20px; border-radius: 24px;
+  font-size: 13px; font-weight: 500;
+  z-index: 600; opacity: 0; transition: all .3s;
+  white-space: nowrap; pointer-events: none;
+}
+.map-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── SATELLITE/TERRAIN BADGE ────────────────────── */
+.layer-badge {
+  position: absolute;
+  bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.55);
+  color: white; padding: 5px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  z-index: 400; pointer-events: none;
+  letter-spacing: .04em;
+}
+
+/* Responsive */
+@media (max-width: 680px) {
+  .detail-panel { width: calc(100% - 24px); top: auto; bottom: 12px; left: 12px; max-height: 55vh; transform: translateY(600px); }
+  .detail-panel.open { transform: translateY(0); }
+  .places-mini-panel { width: calc(100% - 24px); top: auto; bottom: 12px; right: 12px; max-height: 45vh; }
+  .places-mini-panel.hidden { transform: translateY(500px); }
+  .map-top-bar { gap: 7px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-page">
+
+  <!-- ══ TOP BAR: UNIFIED SEARCH + CONTROLS ══ -->
+  <div class="map-top-bar">
+
+    <!-- BIG SEARCH BOX -->
+    <div class="unified-search">
+      <div class="unified-search-box">
+        <span style="font-size:16px;color:#C9A84C;flex-shrink:0">🔍</span>
+        <input type="text" id="uniSearch"
+               placeholder="Search any place in India — village, forest, mountain, river…"
+               autocomplete="off" oninput="handleSearchInput(this.value)"
+               onkeydown="handleSearchKey(event)">
+        <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">✕</button>
+        <button onclick="triggerSearch()" style="background:#C9A84C;color:white;border:none;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+          Go
+        </button>
+      </div>
+      <!-- Autocomplete dropdown -->
+      <div class="search-autocomplete" id="searchAC"></div>
+    </div>
+
+    <!-- VIEW TOGGLE: Map / Satellite / Terrain -->
+    <div class="view-toggle">
+      <button class="view-btn active" id="vBtn-map"       onclick="setLayer('map')">🗺 Map</button>
+      <button class="view-btn"        id="vBtn-satellite" onclick="setLayer('satellite')">🛰 Satellite</button>
+      <button class="view-btn"        id="vBtn-terrain"   onclick="setLayer('terrain')">⛰ Terrain</button>
+    </div>
+
+    <!-- LOCATE ME -->
+    <button onclick="locateMe()" title="My location"
+            style="background:#1A1614;color:#E8C97A;border:none;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">
+      📍 Locate Me
+    </button>
+
+    <!-- PLACES LIST TOGGLE -->
+    <button onclick="toggleMiniPanel()" title="All places"
+            style="background:white;color:#1A1614;border:1.5px solid #e0e0e0;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">
+      📋 List
+    </button>
+  </div>
+
+  <!-- CAT FILTER ROW -->
+  <div style="background:white;padding:6px 16px 8px;border-bottom:1px solid #eee;flex-shrink:0">
+    <div class="cat-filter-row" id="catFilterRow">
+      <button class="cat-pill active" data-cat="all"       onclick="filterCat(this,'all')">🌍 All</button>
+      <button class="cat-pill" data-cat="heritage"         onclick="filterCat(this,'heritage')">🏛️ Heritage</button>
+      <button class="cat-pill" data-cat="nature"           onclick="filterCat(this,'nature')">🌿 Nature</button>
+      <button class="cat-pill" data-cat="beach"            onclick="filterCat(this,'beach')">🏖️ Beach</button>
+      <button class="cat-pill" data-cat="hill"             onclick="filterCat(this,'hill')">⛰️ Hills</button>
+      <button class="cat-pill" data-cat="city"             onclick="filterCat(this,'city')">🏙️ City</button>
+    </div>
+  </div>
+
+  <!-- MAP AREA -->
+  <div class="map-wrap">
+    <div id="mainMap"></div>
+
+    <!-- Loading -->
+    <div class="map-loading" id="mapLoading">
+      <div class="spinner-ring"></div>
+      <p>Loading map…</p>
+    </div>
+
+    <!-- PLACE DETAIL PANEL (left side) -->
+    <div class="detail-panel" id="detailPanel">
+      <button class="dp-close" onclick="closeDetailPanel()">✕</button>
+      <div class="dp-hero" id="dpHero"></div>
+      <div class="dp-body" id="dpBody"></div>
+    </div>
+
+    <!-- PLACES MINI LIST (right side) -->
+    <div class="places-mini-panel" id="miniPanel">
+      <div class="pmp-header">
+        <span class="pmp-title">📍 Places</span>
+        <span class="pmp-count" id="pmpCount">12</span>
+      </div>
+      <div class="pmp-list" id="pmpList"></div>
+    </div>
+
+    <!-- Layer badge -->
+    <div class="layer-badge" id="layerBadge">🗺️ Street Map</div>
+
+    <!-- Toast notification -->
+    <div class="map-toast" id="mapToast"></div>
+
+    <!-- Bottom right controls -->
+    <div class="map-bottom-controls">
+      <button class="map-ctrl-btn" onclick="myMap.zoomIn()"  title="Zoom in">＋</button>
+      <button class="map-ctrl-btn" onclick="myMap.zoomOut()" title="Zoom out">－</button>
+      <button class="map-ctrl-btn" onclick="resetView()"     title="Reset view">🏠</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   SMART NAVIGATOR — UNIFIED MAP PAGE
+   Full-featured: Search + Satellite + All India places
+   ═══════════════════════════════════════════════════════ */
+
+// ── DATA ────────────────────────────────────────────────
+const ALL_PLACES = {{ places_json|safe }};
+const CAT_ICONS  = { heritage:'🏛️', nature:'🌿', beach:'🏖️', hill:'⛰️', city:'🏙️' };
+const CAT_COLORS = { heritage:'#8B4513', nature:'#2D6A4F', beach:'#0077B6', hill:'#4A5568', city:'#6B46C1' };
+
+let myMap, currentLayer, allMarkers=[], activeMarkers=[], currentCat='all';
+let searchTimer, wikiCache={};
+
+// ── TILE LAYERS ──────────────────────────────────────────
+const LAYERS = {
+  map: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap contributors', maxZoom:19
+  }),
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution:'© Esri — Satellite imagery', maxZoom:19
+  }),
+  terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenTopoMap', maxZoom:17
+  })
+};
+const LAYER_LABELS = {
+  map:'🗺️ Street Map',
+  satellite:'🛰️ Satellite View',
+  terrain:'⛰️ Terrain Map'
+};
+
+// ── INIT MAP ─────────────────────────────────────────────
+window.addEventListener('load', () => {
+  myMap = L.map('mainMap', {
+    center: [20.5937, 78.9629],
+    zoom: 5,
+    zoomControl: false,
+    attributionControl: true
+  });
+
+  currentLayer = LAYERS.map;
+  currentLayer.addTo(myMap);
+  document.getElementById('mapLoading').style.display = 'none';
+
+  plotMarkers(ALL_PLACES);
+  buildMiniPanel(ALL_PLACES);
+
+  myMap.on('click', () => {
+    document.getElementById('searchAC').classList.remove('open');
+  });
+});
+
+// ── LAYER SWITCHER ───────────────────────────────────────
+function setLayer(name) {
+  if (currentLayer) myMap.removeLayer(currentLayer);
+  currentLayer = LAYERS[name];
+  currentLayer.addTo(myMap);
+  document.getElementById('layerBadge').textContent = LAYER_LABELS[name];
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('vBtn-'+name).classList.add('active');
+}
+
+// ── CUSTOM MARKER ────────────────────────────────────────
+function makeMarkerIcon(place) {
+  const color = CAT_COLORS[place.category] || '#C9A84C';
+  const icon  = CAT_ICONS[place.category]  || '📍';
+  const html  = `
+    <div style="position:relative;width:36px;height:44px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
+        <path d="M18 1C8.61 1 1 8.61 1 18c0 12.5 17 25 17 25S35 30.5 35 18C35 8.61 27.39 1 18 1z"
+              fill="${color}" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
+        <circle cx="18" cy="18" r="11" fill="rgba(255,255,255,0.2)"/>
+        <text x="18" y="23" text-anchor="middle" font-size="13" dominant-baseline="middle">${icon}</text>
+      </svg>
+    </div>`;
+  return L.divIcon({ html, className:'', iconSize:[36,44], iconAnchor:[18,44], popupAnchor:[0,-48] });
+}
+
+// ── PLOT MARKERS ─────────────────────────────────────────
+function plotMarkers(places) {
+  allMarkers.forEach(m => myMap.removeLayer(m.marker));
+  allMarkers = [];
+
+  places.forEach(p => {
+    if (!p.latitude || !p.longitude) return;
+    const marker = L.marker([p.latitude, p.longitude], { icon: makeMarkerIcon(p) });
+
+    // Popup
+    const imgHtml = (p.images && p.images[0] && p.images[0].startsWith('http'))
+      ? `<img class="mpc-img" src="${p.images[0]}" alt="${escH(p.name)}" loading="lazy">`
+      : `<div class="mpc-img" style="background:${CAT_COLORS[p.category]||'#ccc'};display:flex;align-items:center;justify-content:center;font-size:3rem">${CAT_ICONS[p.category]||'📍'}</div>`;
+    const feeText = p.entry_fee === 0 ? 'Free' : `₹${p.entry_fee}`;
+
+    marker.bindPopup(`
+      <div class="map-popup-card">
+        ${imgHtml}
+        <div class="mpc-body">
+          <div class="mpc-name">${escH(p.name)}</div>
+          <div class="mpc-loc">📍 ${escH(p.city)}, ${escH(p.state)}</div>
+          <div class="mpc-row">
+            <span class="mpc-chip">⭐ ${p.rating}</span>
+            <span class="mpc-chip ${p.entry_fee===0?'free':''}">${feeText}</span>
+            <span class="mpc-chip">${escH(p.category)}</span>
+          </div>
+        </div>
+        <a href="/place/${p.id}" class="mpc-open-btn">View Full Details →</a>
+      </div>`, { maxWidth:220, minWidth:220 }
+    );
+
+    marker.on('click', () => openDetailPanel(p));
+    marker.addTo(myMap);
+    allMarkers.push({ marker, place: p });
+  });
+
+  activeMarkers = [...allMarkers];
+  document.getElementById('pmpCount').textContent = places.length;
+}
+
+// ── CATEGORY FILTER ──────────────────────────────────────
+function filterCat(btn, cat) {
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = cat;
+  const filtered = cat === 'all' ? ALL_PLACES : ALL_PLACES.filter(p => p.category === cat);
+  plotMarkers(filtered);
+  buildMiniPanel(filtered);
+  showToast(`Showing ${filtered.length} ${cat==='all'?'places':cat} places`);
+}
+
+// ── MINI PANEL ───────────────────────────────────────────
+function buildMiniPanel(places) {
+  const list = document.getElementById('pmpList');
+  list.innerHTML = places.map(p => {
+    const img = (p.images && p.images[0] && p.images[0].startsWith('http'))
+      ? `<img src="${p.images[0]}" alt="${escH(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`
+      : `<span>${CAT_ICONS[p.category]||'📍'}</span>`;
+    return `
+      <div class="pmp-item" id="pmp-${p.id}" onclick="flyAndOpen(${p.id})">
+        <div class="pmp-img">${img}</div>
+        <div class="pmp-info">
+          <div class="pmp-name">${escH(p.name)}</div>
+          <div class="pmp-loc">📍 ${escH(p.city)}</div>
+          <div class="pmp-rating">⭐ ${p.rating} · ${p.category}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleMiniPanel() {
+  document.getElementById('miniPanel').classList.toggle('hidden');
+}
+
+// ── DETAIL PANEL ─────────────────────────────────────────
+async function openDetailPanel(place) {
+  const panel = document.getElementById('detailPanel');
+  const hero  = document.getElementById('dpHero');
+  const body  = document.getElementById('dpBody');
+
+  // Hero image
+  const imgSrc = (place.images && place.images[0] && place.images[0].startsWith('http'))
+    ? place.images[0] : null;
+  hero.innerHTML = imgSrc
+    ? `<img class="dp-hero-img" src="${imgSrc}" alt="${escH(place.name)}">
+       <div class="dp-hero-overlay"></div>
+       <div class="dp-hero-info">
+         <span class="dp-cat-badge">${place.category}</span>
+         <div class="dp-place-name">${escH(place.name)}</div>
+         <div class="dp-place-loc">📍 ${escH(place.city)}, ${escH(place.state)}</div>
+       </div>`
+    : `<div class="dp-hero-bg" style="background:${CAT_COLORS[place.category]||'#888'}">${CAT_ICONS[place.category]||'📍'}</div>
+       <div class="dp-hero-overlay"></div>
+       <div class="dp-hero-info">
+         <span class="dp-cat-badge">${place.category}</span>
+         <div class="dp-place-name">${escH(place.name)}</div>
+         <div class="dp-place-loc">📍 ${escH(place.city)}, ${escH(place.state)}</div>
+       </div>`;
+
+  // Body — show loading first
+  body.innerHTML = `
+    <div class="dp-stats">
+      <div class="dp-stat"><span class="dp-stat-val">⭐ ${place.rating}</span><span class="dp-stat-lbl">Rating</span></div>
+      <div class="dp-stat"><span class="dp-stat-val">${place.entry_fee===0?'Free':'₹'+place.entry_fee}</span><span class="dp-stat-lbl">Entry</span></div>
+    </div>
+    <div class="dp-wiki-box" id="dpWiki">
+      <div class="dp-wiki-title">📖 About ${escH(place.name)}</div>
+      <div id="dpWikiText" style="display:flex;align-items:center;gap:8px;color:#aaa;font-size:11px">
+        <span style="width:14px;height:14px;border:2px solid #C9A84C;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0"></span>
+        Loading description…
+      </div>
+    </div>
+    <div id="dpGallery"></div>
+    <div class="dp-info-row"><span class="dp-info-icon">🕐</span><span>${escH(place.timings||'Open all day')}</span></div>
+    <div class="dp-info-row"><span class="dp-info-icon">🌤️</span><span>Best time: ${escH(place.best_time||'Year round')}</span></div>
+    <div class="dp-info-row"><span class="dp-info-icon">⏱</span><span>Duration: ${escH(place.visit_duration||'2-4 hours')}</span></div>
+    <div class="dp-info-row"><span class="dp-info-icon">🗺️</span><span>${place.latitude.toFixed(4)}°N, ${place.longitude.toFixed(4)}°E</span></div>
+    <div class="dp-actions">
+      <a href="/place/${place.id}" class="dp-btn-primary">🔍 Full Details</a>
+      <button class="dp-btn-secondary" onclick="openGoogleMaps(${place.latitude},${place.longitude},'${escH(place.name)}')">Google Maps</button>
+    </div>`;
+
+  panel.classList.add('open');
+
+  // Fetch Wikipedia description + images
+  fetchWikiInfo(place);
+
+  // Highlight in mini panel
+  document.querySelectorAll('.pmp-item').forEach(el => el.classList.remove('active'));
+  const pmpEl = document.getElementById('pmp-'+place.id);
+  if (pmpEl) { pmpEl.classList.add('active'); pmpEl.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+}
+
+async function fetchWikiInfo(place) {
+  const key = place.name + '_' + place.city;
+  if (wikiCache[key]) {
+    renderWikiInfo(wikiCache[key]);
+    return;
+  }
+
+  try {
+    const query  = `${place.name} ${place.city} India`;
+    const url    = `https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=3&srsearch=${encodeURIComponent(query)}`;
+    const sRes   = await fetch(url);
+    const sData  = await sRes.json();
+    const pages  = sData.query?.search || [];
+    if (!pages.length) { renderWikiInfo(null); return; }
+
+    const title  = pages[0].title;
+    // Get extract + images
+    const eUrl   = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages|images&format=json&origin=*&exintro=1&explaintext=1&exsentences=4&pithumbsize=800&titles=${encodeURIComponent(title)}`;
+    const eRes   = await fetch(eUrl);
+    const eData  = await eRes.json();
+    const pageObj= Object.values(eData.query?.pages||{})[0];
+
+    const info = {
+      title:   pageObj?.title || place.name,
+      extract: pageObj?.extract || place.description || '',
+      image:   pageObj?.thumbnail?.source || null,
+      wikiUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`
+    };
+    wikiCache[key] = info;
+    renderWikiInfo(info, place);
+  } catch (e) {
+    renderWikiInfo(null, place);
+  }
+}
+
+function renderWikiInfo(info, place) {
+  const wikiText = document.getElementById('dpWikiText');
+  const gallery  = document.getElementById('dpGallery');
+  if (!wikiText) return;
+
+  if (!info || !info.extract) {
+    wikiText.innerHTML = place?.description
+      ? escH(place.description)
+      : 'No description available. Search for this place to learn more.';
+    return;
+  }
+
+  const extract = info.extract.slice(0, 320) + (info.extract.length > 320 ? '…' : '');
+  wikiText.innerHTML = escH(extract) + ` <a href="${info.wikiUrl}" target="_blank" style="color:#C9A84C;font-weight:600">Read more ↗</a>`;
+
+  // If wiki found a better image and we don't have one
+  if (info.image && gallery) {
+    gallery.innerHTML = `
+      <div class="dp-gallery">
+        <img class="dp-gallery-thumb" src="${info.image}" alt="${escH(info.title)}"
+             onerror="this.parentElement.remove()">
+      </div>`;
+  }
+}
+
+function closeDetailPanel() {
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+// ── SEARCH SYSTEM ────────────────────────────────────────
+let searchDebounce;
+function handleSearchInput(q) {
+  document.getElementById('searchClearBtn').style.display = q ? 'block' : 'none';
+  clearTimeout(searchDebounce);
+  if (!q || q.length < 2) { document.getElementById('searchAC').classList.remove('open'); return; }
+  searchDebounce = setTimeout(() => buildAutocomplete(q), 280);
+}
+
+async function buildAutocomplete(q) {
+  const ac  = document.getElementById('searchAC');
+  const ql  = q.toLowerCase();
+
+  // 1. Match our saved places
+  const localMatches = ALL_PLACES.filter(p =>
+    p.name.toLowerCase().includes(ql) ||
+    p.city.toLowerCase().includes(ql) ||
+    p.state.toLowerCase().includes(ql) ||
+    (p.tags && p.tags.join(' ').toLowerCase().includes(ql))
+  ).slice(0, 5);
+
+  let html = '';
+
+  if (localMatches.length) {
+    html += `<div class="ac-section-label">📌 Saved Places</div>`;
+    html += localMatches.map(p => {
+      const img = (p.images && p.images[0] && p.images[0].startsWith('http'))
+        ? `<img src="${p.images[0]}" alt="${escH(p.name)}" style="width:44px;height:44px;object-fit:cover;border-radius:10px">`
+        : `<span style="font-size:22px">${CAT_ICONS[p.category]||'📍'}</span>`;
+      return `<div class="ac-result" onclick="flyAndOpen(${p.id})">
+        <div class="ac-result-img">${img}</div>
+        <div class="ac-result-info">
+          <div class="ac-result-name">${highlightText(p.name, q)}</div>
+          <div class="ac-result-loc">📍 ${escH(p.city)}, ${escH(p.state)}</div>
+        </div>
+        <span class="ac-result-type saved">⭐ ${p.rating}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // 2. Nominatim for any India place
+  html += `<div class="ac-section-label">🌍 Any place in India</div>`;
+  html += `<div class="ac-result" id="ac-loading-row" style="justify-content:center;color:#aaa;font-size:12px;padding:10px">
+    <span style="width:12px;height:12px;border:2px solid #C9A84C;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px"></span>
+    Searching India…
+  </div>`;
+  ac.innerHTML = html;
+  ac.classList.add('open');
+
+  try {
+    const nUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+' India')}&format=json&limit=6&addressdetails=1&countrycodes=in`;
+    const nRes = await fetch(nUrl, { headers:{ 'User-Agent':'SmartNavigator/1.0' } });
+    const nData = await nRes.json();
+
+    const loadingRow = document.getElementById('ac-loading-row');
+    if (loadingRow) loadingRow.remove();
+
+    if (nData.length) {
+      const geoRows = nData.map(r => {
+        const addr   = r.address || {};
+        const name   = r.display_name.split(',')[0].trim();
+        const loc    = [addr.city||addr.town||addr.village||addr.county||'', addr.state||''].filter(Boolean).join(', ');
+        const type   = r.type || r.class || 'place';
+        return `<div class="ac-result" onclick="searchGeoResult(${r.lat},${r.lon},'${escAttr(name)}','${escAttr(r.display_name)}')">
+          <div class="ac-result-img" style="font-size:20px">${getGeoIcon(type, name)}</div>
+          <div class="ac-result-info">
+            <div class="ac-result-name">${highlightText(name, q)}</div>
+            <div class="ac-result-loc">${escH(loc||r.display_name.slice(0,50))}</div>
+          </div>
+          <span class="ac-result-type">${escH(type)}</span>
+        </div>`;
+      }).join('');
+
+      const existingGeoLabel = ac.querySelector('.ac-section-label:last-of-type');
+      ac.insertAdjacentHTML('beforeend', geoRows);
+    } else {
+      ac.insertAdjacentHTML('beforeend',
+        `<div class="ac-no-results">No results found in India for "<b>${escH(q)}</b>"</div>`);
+    }
+  } catch (e) {
+    const row = document.getElementById('ac-loading-row');
+    if (row) row.remove();
+  }
+}
+
+function getGeoIcon(type, name) {
+  const t = (type+' '+name).toLowerCase();
+  if (t.includes('mountain')||t.includes('peak')||t.includes('hill')) return '⛰️';
+  if (t.includes('forest')||t.includes('jungle')||t.includes('wildlife')) return '🌲';
+  if (t.includes('river')||t.includes('lake')||t.includes('water')) return '💧';
+  if (t.includes('beach')||t.includes('coast')||t.includes('bay')) return '🏖️';
+  if (t.includes('temple')||t.includes('mandir')||t.includes('mosque')||t.includes('church')) return '🛕';
+  if (t.includes('fort')||t.includes('palace')||t.includes('monument')) return '🏛️';
+  if (t.includes('city')||t.includes('town')||t.includes('village')) return '🏡';
+  if (t.includes('national park')||t.includes('sanctuary')) return '🦁';
+  if (t.includes('island')) return '🏝️';
+  if (t.includes('airport')) return '✈️';
+  return '📍';
+}
+
+function handleSearchKey(e) {
+  if (e.key === 'Enter') triggerSearch();
+  if (e.key === 'Escape') { document.getElementById('searchAC').classList.remove('open'); }
+}
+
+function triggerSearch() {
+  const q = document.getElementById('uniSearch').value.trim();
+  if (!q) return;
+  document.getElementById('searchAC').classList.remove('open');
+
+  // Search local places
+  const local = ALL_PLACES.filter(p =>
+    p.name.toLowerCase().includes(q.toLowerCase()) ||
+    p.city.toLowerCase().includes(q.toLowerCase()) ||
+    p.state.toLowerCase().includes(q.toLowerCase())
+  );
+
+  if (local.length) {
+    plotMarkers(local);
+    buildMiniPanel(local);
+    if (local.length === 1 && local[0].latitude) {
+      myMap.flyTo([local[0].latitude, local[0].longitude], 12, { duration:1.5 });
+      setTimeout(() => openDetailPanel(local[0]), 1600);
+    } else {
+      const bounds = L.latLngBounds(local.filter(p=>p.latitude).map(p=>[p.latitude,p.longitude]));
+      if (bounds.isValid()) myMap.flyToBounds(bounds, { padding:[40,40], duration:1.5 });
+    }
+    showToast(`Found ${local.length} place${local.length>1?'s':''} for "${q}"`);
+    return;
+  }
+
+  // Geocode any India location
+  geoSearch(q);
+}
+
+async function geoSearch(q) {
+  showToast('Searching across India…');
+  try {
+    const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+' India')}&format=json&limit=1&addressdetails=1&countrycodes=in`;
+    const res  = await fetch(url, { headers:{ 'User-Agent':'SmartNavigator/1.0' } });
+    const data = await res.json();
+    if (data.length) {
+      const r = data[0];
+      searchGeoResult(r.lat, r.lon, r.display_name.split(',')[0], r.display_name);
+    } else {
+      showToast('No results found. Try a different name.');
+    }
+  } catch { showToast('Search failed. Check internet.'); }
+}
+
+function searchGeoResult(lat, lon, name, fullName) {
+  document.getElementById('searchAC').classList.remove('open');
+  document.getElementById('uniSearch').value = name;
+
+  myMap.flyTo([parseFloat(lat), parseFloat(lon)], 13, { animate:true, duration:1.5 });
+
+  // Add a temporary marker
+  const tmpMarker = L.marker([parseFloat(lat), parseFloat(lon)], {
+    icon: L.divIcon({
+      html:`<div style="background:#C9A84C;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(201,168,76,.3)"></div>`,
+      className:'', iconSize:[14,14], iconAnchor:[7,7]
+    })
+  }).addTo(myMap);
+
+  // Fetch wiki info for this geo place
+  const tmpPlace = {
+    id: 0, name, city: fullName.split(',')[1]?.trim()||'', state: fullName.split(',')[2]?.trim()||'India',
+    category: 'heritage', latitude: parseFloat(lat), longitude: parseFloat(lon),
+    rating: '—', entry_fee: 0, timings: 'Open all day', best_time: 'Year round',
+    visit_duration: 'Varies', images: [], description: fullName
+  };
+
+  openDetailPanel(tmpPlace);
+  showToast(`📍 Showing: ${name}`);
+
+  setTimeout(() => myMap.removeLayer(tmpMarker), 8000);
+}
+
+// ── FLY TO SAVED PLACE ───────────────────────────────────
+function flyAndOpen(placeId) {
+  const entry = allMarkers.find(m => m.place.id === placeId);
+  if (!entry) return;
+  const p = entry.place;
+  myMap.flyTo([p.latitude, p.longitude], 12, { animate:true, duration:1.3 });
+  setTimeout(() => { entry.marker.openPopup(); openDetailPanel(p); }, 1400);
+
+  document.querySelectorAll('.pmp-item').forEach(el => el.classList.remove('active'));
+  const pmpEl = document.getElementById('pmp-'+placeId);
+  if (pmpEl) { pmpEl.classList.add('active'); pmpEl.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+}
+
+// ── LOCATE ME ────────────────────────────────────────────
+function locateMe() {
+  if (!navigator.geolocation) { showToast('Geolocation not supported'); return; }
+  showToast('Finding your location…');
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    myMap.flyTo([lat, lon], 13, { animate:true, duration:1.5 });
+    L.marker([lat, lon], {
+      icon: L.divIcon({
+        html:`<div style="width:18px;height:18px;background:#007AFF;border-radius:50%;border:3px solid white;box-shadow:0 0 0 5px rgba(0,122,255,.25)"></div>`,
+        className:'', iconSize:[18,18], iconAnchor:[9,9]
+      })
+    }).addTo(myMap).bindPopup('<b>📍 You are here</b>').openPopup();
+    showToast('📍 Location found!');
+  }, () => showToast('Could not get your location'));
+}
+
+// ── RESET VIEW ───────────────────────────────────────────
+function resetView() {
+  myMap.flyTo([20.5937, 78.9629], 5, { animate:true, duration:1.2 });
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  document.querySelector('.cat-pill[data-cat="all"]').classList.add('active');
+  currentCat = 'all';
+  plotMarkers(ALL_PLACES);
+  buildMiniPanel(ALL_PLACES);
+  closeDetailPanel();
+  clearSearch();
+}
+
+function clearSearch() {
+  document.getElementById('uniSearch').value = '';
+  document.getElementById('searchClearBtn').style.display = 'none';
+  document.getElementById('searchAC').classList.remove('open');
+}
+
+// ── GOOGLE MAPS REDIRECT ─────────────────────────────────
+function openGoogleMaps(lat, lon, name) {
+  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${lat},${lon}`, '_blank');
+}
+
+// ── TOAST ────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('mapToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── UTILS ────────────────────────────────────────────────
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function highlightText(text, query) {
+  const re = new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')', 'gi');
+  return escH(text).replace(re, '<strong style="color:#C9A84C">$1</strong>');
+}
+
+// Close autocomplete on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.unified-search')) document.getElementById('searchAC').classList.remove('open');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Navigator – Discover India</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/splash.css">
+  <style>
+  /* ── OTP Modal ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+  .modal-box{background:#fff;border-radius:24px;padding:40px 36px;max-width:440px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.3);animation:modalIn .35s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes modalIn{from{opacity:0;transform:scale(.88) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .modal-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1}
+  .modal-step{display:none}.modal-step.active{display:block}
+  .modal-icon{font-size:3rem;text-align:center;margin-bottom:12px}
+  .modal-title{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;color:#1A1614;text-align:center;margin-bottom:6px}
+  .modal-sub{text-align:center;color:#7A706A;font-size:.9rem;margin-bottom:28px;line-height:1.6}
+  .mfield{margin-bottom:16px}
+  .mfield label{display:block;font-size:.82rem;font-weight:600;color:#3D3530;margin-bottom:5px}
+  .mfield input{width:100%;border:1.5px solid #DDD8D2;border-radius:10px;padding:12px 16px;font-size:1rem;font-family:inherit;color:#1A1614;outline:none;background:#F5F2EE;transition:border-color .2s}
+  .mfield input:focus{border-color:#C9A84C;background:#fff}
+  .phone-row{display:flex;gap:8px}
+  .phone-code{width:90px;flex-shrink:0;border:1.5px solid #DDD8D2;border-radius:10px;padding:12px 10px;font-size:.95rem;background:#F5F2EE;color:#1A1614;text-align:center;font-weight:600}
+  .otp-row{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+  .otp-digit{width:52px;height:58px;border:2px solid #DDD8D2;border-radius:12px;font-size:1.6rem;font-weight:700;text-align:center;color:#1A1614;background:#F5F2EE;outline:none;transition:all .2s;font-family:inherit}
+  .otp-digit:focus{border-color:#C9A84C;background:#fff;transform:scale(1.05);box-shadow:0 0 0 3px rgba(201,168,76,.2)}
+  .otp-digit.filled{border-color:#C9A84C;background:#FDF6E9}
+  .modal-btn{width:100%;padding:14px;background:linear-gradient(135deg,#C9A84C,#9B7C30);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .25s;margin-top:4px}
+  .modal-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.4)}
+  .modal-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .modal-btn.secondary{background:transparent;border:1.5px solid #DDD8D2;color:#7A706A;margin-top:10px}
+  .modal-btn.secondary:hover{background:#F5F2EE;box-shadow:none}
+  .modal-error{color:#E74C3C;font-size:.85rem;text-align:center;margin-top:8px;min-height:20px}
+  .modal-success{color:#2D6A4F;font-size:.85rem;text-align:center;margin-top:8px}
+  .resend-row{text-align:center;margin-top:14px;font-size:.85rem;color:#7A706A}
+  .resend-link{color:#C9A84C;font-weight:600;cursor:pointer;border:none;background:none;font-family:inherit;font-size:.85rem}
+  .otp-sent-badge{background:#E8F5E9;color:#2D6A4F;border:1px solid #B2DFDB;border-radius:8px;padding:8px 14px;text-align:center;font-size:.85rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;justify-content:center}
+  .tabs-row{display:flex;gap:0;border-bottom:2px solid #EAE5DF;margin-bottom:24px}
+  .mtab{flex:1;padding:11px;font-size:.92rem;font-weight:600;color:#7A706A;border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;font-family:inherit;transition:all .2s}
+  .mtab.active{color:#C9A84C;border-bottom-color:#C9A84C}
+  .social-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:#7A706A;font-size:.82rem}
+  .social-divider::before,.social-divider::after{content:'';flex:1;height:1px;background:#EAE5DF}
+  .social-btn{width:100%;padding:11px;border:1.5px solid #DDD8D2;border-radius:10px;font-size:.92rem;font-weight:600;cursor:pointer;font-family:inherit;background:#fff;color:#1A1614;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;margin-bottom:8px}
+  .social-btn:hover{background:#F5F2EE;border-color:#C9A84C}
+  .loader-dots{display:inline-flex;gap:4px;align-items:center}
+  .loader-dots span{width:6px;height:6px;border-radius:50%;background:#fff;animation:dotBounce .8s ease-in-out infinite}
+  .loader-dots span:nth-child(2){animation-delay:.15s}
+  .loader-dots span:nth-child(3){animation-delay:.3s}
+  @keyframes dotBounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+  .demo-note{background:#FDF6E9;border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:10px 14px;font-size:.8rem;color:#9B7C30;text-align:center;margin-top:12px}
+  </style>
+</head>
+<body>
+
+<!-- ─── Animated Background ─── -->
+<div class="splash-bg">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<div class="floating-icons" aria-hidden="true">
+  <span class="fi fi-1">🕌</span><span class="fi fi-2">⛵</span>
+  <span class="fi fi-3">🏔️</span><span class="fi fi-4">🏖️</span>
+  <span class="fi fi-5">🛕</span><span class="fi fi-6">🌿</span>
+  <span class="fi fi-7">🦋</span><span class="fi fi-8">🌅</span>
+</div>
+
+<!-- ─── Main Content ─── -->
+<div class="splash-container">
+  <div class="splash-content">
+    <div class="splash-logo" id="splashLogo">
+      <div class="logo-compass">🧭</div>
+      <div class="logo-text">
+        <span class="logo-smart">Smart</span>
+        <span class="logo-nav">Navigator</span>
+      </div>
+    </div>
+
+    <div class="splash-headline" id="splashHeadline">
+      <h1>
+        <span data-i18n="splash_headline1">Discover the</span><br>
+        <span class="headline-accent" data-i18n="splash_headline2">Soul of India</span>
+      </h1>
+      <p class="splash-tagline">
+        <span data-i18n-html="splash_tagline">From snow-capped Himalayas to sun-kissed shores —<br>explore 5000 years of wonder, one journey at a time.</span>
+      </p>
+    </div>
+
+    <div class="splash-stats" id="splashStats">
+      <div class="stat-pill">
+        <span class="stat-num">500+</span>
+        <span class="stat-label" data-i18n="splash_destinations">Destinations</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-pill">
+        <span class="stat-num">5</span>
+        <span class="stat-label" data-i18n="splash_categories">Categories</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-pill">
+        <span class="stat-num">∞</span>
+        <span class="stat-label" data-i18n="splash_memories">Memories</span>
+      </div>
+    </div>
+
+    <!-- Language Selector -->
+    <div class="language-bar" id="langBar">
+      <span class="lang-label" data-i18n="splash_choose_lang">🌐 Choose Language:</span>
+      <div class="lang-options">
+        <button class="lang-btn active" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="hi">हिन्दी</button>
+        <button class="lang-btn" data-lang="ta">தமிழ்</button>
+        <button class="lang-btn" data-lang="te">తెలుగు</button>
+        <button class="lang-btn" data-lang="ml">മലയാളം</button>
+        <button class="lang-btn" data-lang="kn">ಕನ್ನಡ</button>
+      </div>
+    </div>
+
+    <!-- CTA Buttons -->
+    <div class="splash-ctas" id="splashCtas">
+      <button class="cta-primary" onclick="openAuthModal('register')">
+        <span data-i18n="splash_start">Start Exploring</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <button class="cta-secondary" onclick="openAuthModal('login')">Sign In</button>
+    </div>
+
+    <div class="scroll-hint" id="scrollHint">
+      <span data-i18n="splash_scroll">scroll to discover</span>
+      <div class="scroll-arrow">↓</div>
+    </div>
+  </div>
+</div>
+
+<!-- Ribbon -->
+<section class="splash-places-ribbon">
+  <div class="ribbon-track" id="ribbonTrack"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     AUTH MODAL — Register / Login / OTP
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="authModal" style="display:none" onclick="closeOnOverlay(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- Tabs -->
+    <div class="tabs-row">
+      <button class="mtab active" id="tabRegister" onclick="switchTab('register')">Create Account</button>
+      <button class="mtab"        id="tabLogin"    onclick="switchTab('login')">Sign In</button>
+    </div>
+
+    <!-- ════════════════════════════════════
+         REGISTER — Step 1: Name + Email
+    ════════════════════════════════════ -->
+    <div class="modal-step active" id="regStep1">
+      <div class="modal-icon">📧</div>
+      <div class="modal-title">Create Account</div>
+      <div class="modal-sub">Enter your name and email — we'll send you a verification code</div>
+
+      <div class="mfield">
+        <label>Full Name</label>
+        <input type="text" id="regName" placeholder="Arjun Sharma"
+               autocomplete="name" onkeydown="if(event.key==='Enter')document.getElementById('regEmail').focus()">
+      </div>
+      <div class="mfield">
+        <label>Email Address</label>
+        <input type="email" id="regEmailInput" placeholder="arjun@gmail.com"
+               autocomplete="email" onkeydown="if(event.key==='Enter')sendEmailOTP()">
+      </div>
+
+      <button class="modal-btn" id="sendOtpBtn" onclick="sendEmailOTP()">
+        <span id="sendOtpText">Send Verification Code →</span>
+      </button>
+      <div class="modal-error" id="regError"></div>
+      <div style="text-align:center;margin-top:14px;font-size:.82rem;color:#7A706A">
+        Already have an account?
+        <span style="color:#C9A84C;font-weight:700;cursor:pointer" onclick="switchTab('login')">Sign In</span>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         REGISTER — Step 2: Enter OTP
+    ════════════════════════════════════ -->
+    <div class="modal-step" id="regStep2">
+      <div class="modal-icon">🔐</div>
+      <div class="modal-title">Verify Your Email</div>
+      <div class="modal-sub" id="otpSentMsg">OTP sent to your email</div>
+
+      <div class="otp-row" style="margin:20px 0">
+        <input class="otp-digit" id="otp0" maxlength="1" type="tel"
+               oninput="otpInput(this,0)" onkeydown="otpBack(event,this,0)">
+        <input class="otp-digit" id="otp1" maxlength="1" type="tel"
+               oninput="otpInput(this,1)" onkeydown="otpBack(event,this,1)">
+        <input class="otp-digit" id="otp2" maxlength="1" type="tel"
+               oninput="otpInput(this,2)" onkeydown="otpBack(event,this,2)">
+        <input class="otp-digit" id="otp3" maxlength="1" type="tel"
+               oninput="otpInput(this,3)" onkeydown="otpBack(event,this,3)">
+        <input class="otp-digit" id="otp4" maxlength="1" type="tel"
+               oninput="otpInput(this,4)" onkeydown="otpBack(event,this,4)">
+        <input class="otp-digit" id="otp5" maxlength="1" type="tel"
+               oninput="otpInput(this,5)" onkeydown="otpBack(event,this,5)">
+      </div>
+
+      <button class="modal-btn" id="verifyBtn" onclick="verifyEmailOTP()">
+        <span id="verifyText">Verify & Create Account</span>
+      </button>
+      <div class="modal-error" id="otpError"></div>
+
+      <div class="resend-row">
+        Didn't receive code?
+        <button class="resend-link" id="resendBtn" onclick="resendOTP()" disabled>Resend</button>
+        <span id="resendTimer"></span>
+      </div>
+      <button class="modal-btn secondary" style="margin-top:8px" onclick="backToStep1()">← Change Email</button>
+    </div>
+
+    <!-- ════════════════════════════════════
+         LOGIN — Simple email only
+    ════════════════════════════════════ -->
+    <div class="modal-step" id="loginStep">
+      <div class="modal-icon">👋</div>
+      <div class="modal-title">Welcome Back!</div>
+      <div class="modal-sub">Enter your registered email to sign in</div>
+
+      <div class="mfield">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="arjun@gmail.com"
+               autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+
+      <button class="modal-btn" id="loginBtn" onclick="doLogin()">
+        <span id="loginBtnText">Sign In →</span>
+      </button>
+      <div class="modal-error"   id="loginError"></div>
+      <div class="modal-success" id="loginSuccess"></div>
+
+      <div style="text-align:center;margin-top:14px;font-size:.82rem;color:#7A706A">
+        Don't have an account?
+        <span style="color:#C9A84C;font-weight:700;cursor:pointer" onclick="switchTab('register')">Create one</span>
+      </div>
+    </div>
+
+  </div><!-- /modal-box -->
+</div><!-- /modal-overlay -->
+</div>
+
+<script src="/static/js/translations.js"></script>
+<script src="/static/js/splash.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   Smart Navigator — Auth Modal
+   Register: Email OTP verification via Gmail SMTP
+   Login:    Email only — no password needed
+═══════════════════════════════════════════════════════ */
+
+var currentEmail = '';
+var resendInterval;
+
+// ── Open / Close ─────────────────────────────────────
+function openAuthModal(tab) {
+  document.getElementById('authModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  switchTab(tab || 'register');
+}
+function closeModal() {
+  document.getElementById('authModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function closeOnOverlay(e) {
+  if (e.target.id === 'authModal') closeModal();
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Switch Tabs ──────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.mtab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.modal-step').forEach(function(s) { s.classList.remove('active'); });
+  if (tab === 'login') {
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('loginStep').classList.add('active');
+  } else {
+    document.getElementById('tabRegister').classList.add('active');
+    document.getElementById('regStep1').classList.add('active');
+  }
+  clearAllErrors();
+}
+
+// ── REGISTER: Send OTP to Email ──────────────────────
+async function sendEmailOTP() {
+  var name  = document.getElementById('regName').value.trim();
+  var email = document.getElementById('regEmailInput').value.trim();
+  var errEl = document.getElementById('regError');
+  clearEl(errEl);
+
+  if (!name)               { showErr(errEl, 'Please enter your full name'); return; }
+  if (!email)              { showErr(errEl, 'Please enter your email address'); return; }
+  if (!email.includes('@')){ showErr(errEl, 'Please enter a valid email address'); return; }
+
+  currentEmail = email;
+
+  var btn  = document.getElementById('sendOtpBtn');
+  var text = document.getElementById('sendOtpText');
+  btn.disabled = true;
+  text.innerHTML = '<span class="loader-dots"><span></span><span></span><span></span></span> Sending…';
+
+  try {
+    var res  = await fetch('/api/email/send-otp', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email: email, name: name, purpose: 'register' })
+    });
+    var data = await res.json();
+
+    btn.disabled = false;
+    text.textContent = 'Send Verification Code →';
+
+    if (!res.ok) {
+      showErr(errEl, data.error || 'Failed to send OTP. Please try again.');
+      return;
+    }
+
+    // Move to OTP entry step
+    document.getElementById('regStep1').classList.remove('active');
+    document.getElementById('regStep2').classList.add('active');
+    document.getElementById('otpSentMsg').textContent =
+      'A 6-digit code was sent to ' + email + '. Check your inbox!';
+    document.getElementById('otp0').focus();
+    startResendTimer();
+
+  } catch(e) {
+    btn.disabled = false;
+    text.textContent = 'Send Verification Code →';
+    showErr(errEl, 'Network error. Please check your connection.');
+  }
+}
+
+// ── REGISTER: Verify OTP ─────────────────────────────
+async function verifyEmailOTP() {
+  var otp   = getOTPValue();
+  var errEl = document.getElementById('otpError');
+  clearEl(errEl);
+
+  if (otp.length < 6) { showErr(errEl, 'Please enter all 6 digits'); return; }
+
+  var name  = document.getElementById('regName').value.trim();
+  var email = document.getElementById('regEmailInput').value.trim();
+
+  var btn  = document.getElementById('verifyBtn');
+  var text = document.getElementById('verifyText');
+  btn.disabled = true;
+  text.innerHTML = '<span class="loader-dots"><span></span><span></span><span></span></span> Verifying…';
+
+  try {
+    var res  = await fetch('/api/email/verify-otp', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email: email, otp: otp, name: name, purpose: 'register' })
+    });
+    var data = await res.json();
+
+    btn.disabled = false;
+    text.textContent = 'Verify & Create Account';
+
+    if (res.ok && data.success) {
+      errEl.style.color = '#2D6A4F';
+      errEl.textContent = '✅ Account created! Redirecting…';
+      clearInterval(resendInterval);
+      setTimeout(function() { window.location.href = '/home'; }, 1000);
+    } else {
+      showErr(errEl, data.error || 'Verification failed. Please try again.');
+    }
+  } catch(e) {
+    btn.disabled = false;
+    text.textContent = 'Verify & Create Account';
+    showErr(errEl, 'Network error. Please try again.');
+  }
+}
+
+// ── LOGIN: Email only ────────────────────────────────
+async function doLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var errEl = document.getElementById('loginError');
+  var sucEl = document.getElementById('loginSuccess');
+  clearEl(errEl); clearEl(sucEl);
+
+  if (!email)               { showErr(errEl, 'Please enter your email address'); return; }
+  if (!email.includes('@')) { showErr(errEl, 'Please enter a valid email address'); return; }
+
+  var btn  = document.getElementById('loginBtn');
+  var text = document.getElementById('loginBtnText');
+  btn.disabled = true;
+  text.innerHTML = '<span class="loader-dots"><span></span><span></span><span></span></span> Signing in…';
+
+  try {
+    var res  = await fetch('/api/auth/login-email', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email: email })
+    });
+    var data = await res.json();
+
+    btn.disabled = false;
+    text.textContent = 'Sign In →';
+
+    if (res.ok && data.success) {
+      sucEl.style.color = '#2D6A4F';
+      sucEl.textContent = '✅ Welcome back, ' + data.user.name + '! Redirecting…';
+      setTimeout(function() { window.location.href = '/home'; }, 900);
+    } else {
+      showErr(errEl, data.error || 'No account found. Please register first.');
+    }
+  } catch(e) {
+    btn.disabled = false;
+    text.textContent = 'Sign In →';
+    showErr(errEl, 'Network error. Please check your connection.');
+  }
+}
+
+// ── OTP Input Helpers ────────────────────────────────
+function otpInput(el, idx) {
+  el.value = el.value.replace(/\D/g, '').slice(-1);
+  el.classList.toggle('filled', el.value !== '');
+  if (el.value && idx < 5) document.getElementById('otp' + (idx + 1)).focus();
+  if (getOTPValue().length === 6) setTimeout(verifyEmailOTP, 300);
+}
+function otpBack(e, el, idx) {
+  if (e.key === 'Backspace' && !el.value && idx > 0)
+    document.getElementById('otp' + (idx - 1)).focus();
+}
+function getOTPValue() {
+  return [0,1,2,3,4,5].map(function(i) {
+    return document.getElementById('otp' + i).value;
+  }).join('');
+}
+
+// ── Resend Timer ─────────────────────────────────────
+function startResendTimer() {
+  var secs = 30;
+  var btn  = document.getElementById('resendBtn');
+  btn.disabled = true;
+  btn.style.opacity = '.4';
+  clearInterval(resendInterval);
+  resendInterval = setInterval(function() {
+    secs--;
+    document.getElementById('resendTimer').textContent = ' (' + secs + 's)';
+    if (secs <= 0) {
+      clearInterval(resendInterval);
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      document.getElementById('resendTimer').textContent = '';
+    }
+  }, 1000);
+}
+
+async function resendOTP() {
+  var email = document.getElementById('regEmailInput').value.trim();
+  var name  = document.getElementById('regName').value.trim();
+  await fetch('/api/email/send-otp', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ email: email, name: name, purpose: 'register' })
+  });
+  [0,1,2,3,4,5].forEach(function(i) {
+    var el = document.getElementById('otp' + i);
+    el.value = ''; el.classList.remove('filled');
+  });
+  document.getElementById('otp0').focus();
+  startResendTimer();
+}
+
+function backToStep1() {
+  document.getElementById('regStep2').classList.remove('active');
+  document.getElementById('regStep1').classList.add('active');
+  clearInterval(resendInterval);
+}
+
+// ── Utility ──────────────────────────────────────────
+function showErr(el, msg) {
+  if (!el) return;
+  el.style.color = '#E74C3C';
+  el.textContent  = msg;
+}
+function clearEl(el) { if (el) el.textContent = ''; }
+function clearAllErrors() {
+  document.querySelectorAll('.modal-error,.modal-success').forEach(function(el) {
+    el.textContent = '';
+  });
+}
+</script>
+</body>

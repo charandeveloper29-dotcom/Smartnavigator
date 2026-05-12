@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% if page == 'register' %}Create Account{% else %}Sign In{% endif %} – Smart Navigator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body class="auth-body">
+
+<div class="auth-page">
+
+  <!-- Left panel: decoration -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <a href="/" class="auth-brand">
+        <span>🧭</span> Smart Navigator
+      </a>
+      <div class="auth-quote">
+        <h2>"The world is a book,<br>and those who do not<br>travel read only<br>one page."</h2>
+        <span>— Saint Augustine</span>
+      </div>
+      <div class="auth-places-preview">
+        <div class="ap-item">🏛️ Taj Mahal</div>
+        <div class="ap-item">🌿 Kerala</div>
+        <div class="ap-item">🏖️ Goa</div>
+        <div class="ap-item">⛰️ Manali</div>
+        <div class="ap-item">🕌 Varanasi</div>
+        <div class="ap-item">🏙️ Mumbai</div>
+      </div>
+    </div>
+    <div class="auth-left-orb orb-a"></div>
+    <div class="auth-left-orb orb-b"></div>
+  </div>
+
+  <!-- Right panel: form -->
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+
+      <div class="auth-tabs">
+        <a href="/login" class="auth-tab {% if page == 'login' %}active{% endif %}">Sign In</a>
+        <a href="/register" class="auth-tab {% if page == 'register' %}active{% endif %}">Create Account</a>
+      </div>
+
+      <!-- Error / Success message -->
+      <div class="form-alert" id="formAlert" hidden></div>
+
+      {% if page == 'register' %}
+      <!-- ─── Register Form ─────────────────────────────── -->
+      <form id="registerForm" class="auth-form" novalidate>
+        <h1 class="form-title" data-i18n="create_acc">Create Account</h1>
+        <p class="form-subtitle" data-i18n="start_journey">Start your journey with Smart Navigator</p>
+
+        <div class="form-group">
+          <label for="regName">Full Name</label>
+          <input type="text" id="regName" name="name" placeholder="Arjun Sharma" required autocomplete="name">
+          <span class="field-error" id="nameErr"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="regEmail">Email Address</label>
+          <input type="email" id="regEmail" name="email" placeholder="arjun@example.com" required autocomplete="email">
+          <span class="field-error" id="emailErr"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <div class="input-with-toggle">
+            <input type="password" id="regPassword" name="password" placeholder="Min. 6 characters" required autocomplete="new-password">
+            <button type="button" class="pwd-toggle" onclick="togglePwd('regPassword', this)">👁</button>
+          </div>
+          <span class="field-error" id="pwdErr"></span>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" id="regBtn">
+          <span>Create Account</span>
+          <span class="btn-loader" hidden>…</span>
+        </button>
+
+        <p class="auth-switch">Already have an account? <a href="/login">Sign In</a></p>
+      </form>
+
+      {% else %}
+      <!-- ─── Login Form ──────────────────────────────────── -->
+      <form id="loginForm" class="auth-form" novalidate>
+        <h1 class="form-title" data-i18n="welcome_back">Welcome Back</h1>
+        <p class="form-subtitle" data-i18n="continue_exp">Continue your exploration</p>
+
+        <div class="form-group">
+          <label for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" name="email" placeholder="arjun@example.com" required autocomplete="email">
+          <span class="field-error" id="loginEmailErr"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="input-with-toggle">
+            <input type="password" id="loginPassword" name="password" placeholder="Your password" required autocomplete="current-password">
+            <button type="button" class="pwd-toggle" onclick="togglePwd('loginPassword', this)">👁</button>
+          </div>
+          <span class="field-error" id="loginPwdErr"></span>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" id="loginBtn">
+          <span>Sign In</span>
+          <span class="btn-loader" hidden>…</span>
+        </button>
+
+        <p class="auth-switch">Don't have an account? <a href="/register">Create one</a></p>
+        <p class="demo-hint">
+          💡 <strong>Demo login:</strong> arjun@example.com / any password will create a session
+        </p>
+      </form>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/js/translations.js"></script>
+<script src="/static/js/auth.js"></script>
+</body>
+</html>

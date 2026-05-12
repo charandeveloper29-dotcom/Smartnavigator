@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}{{ place.name }} – Smart Navigator{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/services.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ─── Place Hero ────────────────────────────────────────── -->
+<section class="place-hero cat-bg-{{ place.category }}"
+  {% if place.images and place.images[0].startswith('http') %}
+  style="background-image: url('{{ place.images[0] }}'); background-size:cover; background-position:center;"
+  {% endif %}>
+  <div class="place-hero-overlay"></div>
+  <div class="place-hero-content">
+    <div class="breadcrumb">
+      <a href="/home">Home</a>
+      <span>›</span>
+      <a href="/explore?category={{ place.category }}">{{ place.category|capitalize }}</a>
+      <span>›</span>
+      <span>{{ place.name }}</span>
+    </div>
+    <div class="place-hero-meta">
+      <span class="place-category-tag">{{ place.category|upper }}</span>
+      {% for tag in place.tags[:3] %}
+        <span class="place-tag">#{{ tag }}</span>
+      {% endfor %}
+    </div>
+    <h1 class="place-hero-title">{{ place.name }}</h1>
+    <div class="place-hero-info">
+      <span>📍 {{ place.city }}, {{ place.state }}</span>
+      <span>⭐ {{ avg_rating }} ({{ place.review_count }} reviews)</span>
+      <span>⏱ {{ place.visit_duration }}</span>
+    </div>
+
+    {% if current_user %}
+    <button class="hero-save-btn {% if is_saved %}saved{% endif %}" id="heroSaveBtn"
+            onclick="toggleSave({{ place.id }}, this)">
+      {% if is_saved %}❤️ Saved{% else %}🤍 Save Place{% endif %}
+    </button>
+    {% else %}
+    <a href="/login" class="hero-save-btn">🤍 Save Place</a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ─── Main Detail Layout ─────────────────────────────────── -->
+<div class="place-detail-layout">
+
+  <!-- ─── Left Column: Info ─────────────────────────────────── -->
+  <div class="place-main-col">
+
+    <!-- Info Cards Row -->
+    <div class="info-cards-row">
+      <div class="info-card">
+        <span class="ic-icon">🕐</span>
+        <div>
+          <span class="ic-label">Timings</span>
+          <span class="ic-value">{{ place.timings }}</span>
+        </div>
+      </div>
+      <div class="info-card">
+        <span class="ic-icon">🎟️</span>
+        <div>
+          <span class="ic-label">Entry Fee</span>
+          <span class="ic-value">
+            {% if place.entry_fee == 0 %}Free{% else %}₹{{ place.entry_fee }} (Indians) / ₹{{ place.entry_fee_foreign }} (Foreign){% endif %}
+          </span>
+        </div>
+      </div>
+      <div class="info-card">
+        <span class="ic-icon">🌤️</span>
+        <div>
+          <span class="ic-label">Best Time</span>
+          <span class="ic-value">{{ place.best_time }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="detail-section">
+      <h2 class="detail-section-title">About {{ place.name }}</h2>
+      <p class="place-description">{{ place.description }}</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         🆕 QUICK SERVICES SECTION
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="quick-services-section">
+      <h3>🚀 Quick Services</h3>
+      <div class="service-buttons">
+        <!-- Swiggy Button -->
+        <a href="https://www.swiggy.com/city/{{ place.city|lower|replace(' ', '-') }}" 
+           target="_blank" 
+           class="service-btn swiggy"
+           data-service="swiggy"
+           data-place-id="{{ place.id }}"
+           data-city="{{ place.city }}">
+            <span class="service-icon">🍽️</span>
+            <span class="service-name">Order Food</span>
+            <span class="service-brand">Swiggy</span>
+        </a>
+        
+        <!-- PharmEasy Button -->
+        <a href="https://pharmeasy.in" 
+           target="_blank" 
+           class="service-btn pharmeasy"
+           data-service="pharmeasy"
+           data-place-id="{{ place.id }}"
+           data-city="{{ place.city }}">
+            <span class="service-icon">💊</span>
+            <span class="service-name">Order Medicine</span>
+            <span class="service-brand">PharmEasy</span>
+        </a>
+        
+        <!-- Rapido Button -->
+        <a href="https://www.rapido.bike" 
+           target="_blank" 
+           class="service-btn rapido"
+           data-service="rapido"
+           data-place-id="{{ place.id }}"
+           data-city="{{ place.city }}">
+            <span class="service-icon">🏍️</span>
+            <span class="service-name">Book Ride</span>
+            <span class="service-brand">Rapido</span>
+        </a>
+      </div>
+    </div>
+    <!-- ═══════════════════════════════════════════════════════════
+         END QUICK SERVICES SECTION
+         ═══════════════════════════════════════════════════════════ -->
+
+    <!-- ─── Nearby Places ──────────────────────────────────── -->
+    <div class="detail-section">
+      <div class="section-header-row">
+        <h2 class="detail-section-title" data-i18n="nearby_title">Nearby Places</h2>
+        <div class="nearby-radius-control">
+          <label data-i18n="radius_label">Radius:</label>
+          <select id="nearbyRadius" onchange="loadNearby(this.value)">
+            <option value="20">20 km</option>
+            <option value="50">50 km</option>
+            <option value="100">100 km</option>
+            <option value="200">200 km</option>
+            <option value="500">500 km</option>
+          </select>
+        </div>
+      </div>
+      <div class="nearby-loading" id="nearbyLoading">
+        <div class="loading-spinner"></div> Finding nearby places…
+      </div>
+      <div class="nearby-scroll-wrap">
+        <div class="nearby-cards-row" id="nearbyCards"></div>
+      </div>
+      <p class="nearby-empty" id="nearbyEmpty" hidden data-i18n="no_nearby">No places found within this radius.</p>
+    </div>
+
+    <!-- ─── Hotels ─────────────────────────────────────────── -->
+    <div class="detail-section">
+      <h2 class="detail-section-title" data-i18n="stay_title">Where to Stay</h2>
+      {% if hotels %}
+        <div class="hotels-grid">
+          {% for hotel in hotels %}
+          <div class="hotel-card">
+            <div class="hotel-card-header hcat-{{ hotel.category }}">
+              <div class="hotel-cat-badge">{{ hotel.category|upper }}</div>
+            </div>
+            <div class="hotel-card-body">
+              <div class="hotel-rating-row">
+                <span class="hotel-stars">⭐ {{ hotel.rating }}</span>
+                <span class="hotel-reviews">({{ hotel.review_count }} reviews)</span>
+                <span class="hotel-distance">📍 {{ hotel.distance_from_place }} km away</span>
+              </div>
+              <h3 class="hotel-name">{{ hotel.name }}</h3>
+              <p class="hotel-address">{{ hotel.address }}</p>
+              <p class="hotel-desc">{{ hotel.description[:120] }}…</p>
+              <div class="hotel-amenities">
+                {% for amenity in hotel.amenities[:5] %}
+                  <span class="amenity-tag">{{ amenity }}</span>
+                {% endfor %}
+                {% if hotel.amenities|length > 5 %}
+                  <span class="amenity-tag more">+{{ hotel.amenities|length - 5 }} more</span>
+                {% endif %}
+              </div>
+              <div class="hotel-footer">
+                <div class="hotel-price">
+                  <span class="price-label">From</span>
+                  <span class="price-value">₹{{ "{:,}".format(hotel.price_per_night) }}</span>
+                  <span class="price-unit">/night</span>
+                </div>
+                <a href="tel:{{ hotel.contact }}" class="hotel-contact-btn">📞 Contact</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No hotel information available for this destination.</p>
+      {% endif %}
+    </div>
+
+    <!-- ─── Transport Routes ────────────────────────────────── -->
+    <div class="detail-section">
+      <h2 class="detail-section-title" data-i18n="transport_title">How to Get There</h2>
+      {% if routes %}
+        <!-- Mode filter tabs -->
+        <div class="mode-tabs" id="modeTabs">
+          <button class="mode-tab active" data-mode="all">All</button>
+          {% set modes = [] %}
+          {% for route in routes %}
+            {% if route.mode not in modes %}
+              {% set _ = modes.append(route.mode) %}
+              <button class="mode-tab" data-mode="{{ route.mode }}">
+                {% if route.mode == 'flight' %}✈️{% elif route.mode == 'train' %}🚂{% elif route.mode == 'bus' %}🚌{% else %}🚕{% endif %}
+                {{ route.mode|capitalize }}
+              </button>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="routes-list" id="routesList">
+          {% for route in routes %}
+          <div class="route-card" data-mode="{{ route.mode }}">
+            <div class="route-mode-icon">
+              {% if route.mode == 'flight' %}✈️
+              {% elif route.mode == 'train' %}🚂
+              {% elif route.mode == 'bus' %}🚌
+              {% else %}🚕{% endif %}
+            </div>
+            <div class="route-info">
+              <div class="route-header">
+                <span class="route-from-to">{{ route.from_city }} → {{ route.to_city }}</span>
+                <span class="route-operator">{{ route.operator }}</span>
+              </div>
+              <div class="route-details">
+                <span>⏱ {{ route.duration }}</span>
+                <span>📏 {{ route.distance }} km</span>
+                <span>🔁 {{ route.frequency }}</span>
+              </div>
+              {% if route.departure_times %}
+              <div class="route-times">
+                <span class="times-label">Departures:</span>
+                {% for t in route.departure_times %}
+                  <span class="time-badge">{{ t }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% if route.booking_note %}
+              <p class="route-note">💡 {{ route.booking_note }}</p>
+              {% endif %}
+            </div>
+            <div class="route-cost">
+              <span class="cost-range">₹{{ "{:,}".format(route.cost_min) }} – ₹{{ "{:,}".format(route.cost_max) }}</span>
+              <span class="cost-label">per person</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No route information available for this destination.</p>
+      {% endif %}
+    </div>
+
+    <!-- ─── Reviews ────────────────────────────────────────── -->
+    <div class="detail-section">
+      <div class="section-header-row">
+        <h2 class="detail-section-title" data-i18n="reviews_title">Traveller Reviews</h2>
+        <span class="review-count">{{ reviews|length }} reviews</span>
+      </div>
+
+      <!-- Rating Summary -->
+      <div class="rating-summary">
+        <div class="rating-big">
+          <span class="rating-number">{{ avg_rating }}</span>
+          <div class="rating-stars">
+            {% for i in range(1, 6) %}
+              <span class="star {% if i <= avg_rating|int %}filled{% elif i <= avg_rating|round %}half{% endif %}">★</span>
+            {% endfor %}
+          </div>
+          <span class="rating-count">{{ place.review_count }} reviews</span>
+        </div>
+      </div>
+
+      <!-- Add Review -->
+      {% if current_user %}
+      <div class="add-review-form" id="reviewForm">
+        <h3 data-i18n="share_exp">Share Your Experience</h3>
+        <div class="star-rating-input" id="starInput">
+          {% for i in range(1, 6) %}
+            <span class="star-pick" data-val="{{ i }}">★</span>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="reviewRating" value="0">
+        <input type="text" id="reviewTitle" placeholder="Review title…" data-i18n-placeholder="rev_title_ph" maxlength="100">
+        <textarea id="reviewContent" placeholder="Tell others about your experience…" data-i18n-placeholder="rev_body_ph" rows="4"></textarea>
+        <button class="submit-review-btn" onclick="submitReview({{ place.id }})" data-i18n="submit_review">Submit Review</button>
+        <p class="review-msg" id="reviewMsg"></p>
+      </div>
+      {% else %}
+      <div class="login-to-review">
+        <a href="/login" data-i18n="login_review">Sign in to leave a review</a>
+      </div>
+      {% endif %}
+
+      <!-- Reviews list -->
+      <div class="reviews-list" id="reviewsList">
+        {% for review in reviews %}
+        <div class="review-card">
+          <div class="review-header">
+            <div class="reviewer-avatar">{{ review.user_name[0].upper() }}</div>
+            <div>
+              <span class="reviewer-name">{{ review.user_name }}</span>
+              <span class="review-date">{{ review.created_at[:10] }}</span>
+            </div>
+            <div class="review-stars">
+              {% for i in range(1, 6) %}
+                <span class="star {% if i <= review.rating %}filled{% endif %}">★</span>
+              {% endfor %}
+            </div>
+          </div>
+          <h4 class="review-title">{{ review.title }}</h4>
+          <p class="review-content">{{ review.content }}</p>
+          <div class="review-footer">
+            <span class="helpful">👍 {{ review.helpful_count }} found this helpful</span>
+          </div>
+        </div>
+        {% endfor %}
+        {% if not reviews %}
+          <p class="empty-state">No reviews yet. Be the first to review!</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /place-main-col -->
+
+  <!-- ─── Right Column: Quick Info ──────────────────────────── -->
+  <aside class="place-side-col">
+    <div class="side-widget">
+      <h3 data-i18n="quick_info">Quick Info</h3>
+      <div class="quick-info-list">
+        <div class="qi-item">
+          <span class="qi-icon">📍</span>
+          <div><span class="qi-label">Location</span><span class="qi-val">{{ place.city }}, {{ place.state }}</span></div>
+        </div>
+        <div class="qi-item">
+          <span class="qi-icon">⭐</span>
+          <div><span class="qi-label">Rating</span><span class="qi-val">{{ avg_rating }} / 5</span></div>
+        </div>
+        <div class="qi-item">
+          <span class="qi-icon">🎟️</span>
+          <div><span class="qi-label">Entry</span><span class="qi-val">{% if place.entry_fee == 0 %}Free{% else %}₹{{ place.entry_fee }}{% endif %}</span></div>
+        </div>
+        <div class="qi-item">
+          <span class="qi-icon">🕐</span>
+          <div><span class="qi-label">Open</span><span class="qi-val">{{ place.timings }}</span></div>
+        </div>
+        <div class="qi-item">
+          <span class="qi-icon">⏱</span>
+          <div><span class="qi-label">Duration</span><span class="qi-val">{{ place.visit_duration }}</span></div>
+        </div>
+        <div class="qi-item">
+          <span class="qi-icon">🌤️</span>
+          <div><span class="qi-label">Best Time</span><span class="qi-val">{{ place.best_time }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="side-widget">
+      <h3 data-i18n="tags_title">Tags</h3>
+      <div class="tags-cloud">
+        {% for tag in place.tags %}
+          <a href="/explore?q={{ tag }}" class="tag-badge">#{{ tag }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Map Placeholder -->
+    <div class="side-widget">
+      <h3 data-i18n="location_lbl">Location</h3>
+      <div class="map-placeholder">
+        <div class="map-coords">
+          <span>📍 {{ place.latitude }}°N, {{ place.longitude }}°E</span>
+        </div>
+        <a href="https://www.google.com/maps/search/?api=1&query={{ place.latitude }},{{ place.longitude }}"
+           target="_blank" rel="noopener" class="open-maps-btn">
+          Open in Google Maps ↗
+        </a>
+      </div>
+    </div>
+  </aside>
+
+</div><!-- /place-detail-layout -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const PLACE_ID = {{ place.id }};
+  const PLACE_LAT = {{ place.latitude }};
+  const PLACE_LNG = {{ place.longitude }};
+</script>
+<script src="/static/js/place.js"></script>
+<script src="/static/js/services.js"></script>
+{% endblock %}

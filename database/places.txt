@@ -1,0 +1,345 @@
+[
+  {
+    "id": 1,
+    "name": "Taj Mahal",
+    "city": "Agra",
+    "state": "Uttar Pradesh",
+    "country": "India",
+    "category": "heritage",
+    "description": "One of the Seven Wonders of the World, the Taj Mahal is a stunning white marble mausoleum built by Mughal Emperor Shah Jahan in memory of his beloved wife Mumtaz Mahal. It stands as the pinnacle of Mughal architecture, blending Persian, Islamic, and Indian styles in perfect harmony.",
+    "latitude": 27.1751,
+    "longitude": 78.0421,
+    "entry_fee": 50,
+    "entry_fee_foreign": 1100,
+    "timings": "Sunrise to Sunset (Closed on Fridays)",
+    "best_time": "October to March",
+    "rating": 4.8,
+    "review_count": 2840,
+    "images": [
+      "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&q=80",
+      "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=800&q=80"
+    ],
+    "tags": [
+      "UNESCO",
+      "monument",
+      "mughal",
+      "wonder"
+    ],
+    "featured": true,
+    "visit_duration": "3-4 hours"
+  },
+  {
+    "id": 2,
+    "name": "Kerala Backwaters",
+    "city": "Alleppey",
+    "state": "Kerala",
+    "country": "India",
+    "category": "nature",
+    "description": "The Kerala Backwaters are a network of interconnected canals, rivers, lakes and inlets formed by more than 900 km of waterways. Houseboat cruises through these serene backwaters offer a unique and tranquil experience surrounded by lush greenery and traditional village life.",
+    "latitude": 9.4981,
+    "longitude": 76.3388,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day",
+    "best_time": "September to March",
+    "rating": 4.7,
+    "review_count": 1920,
+    "images": [
+      "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80"
+    ],
+    "tags": [
+      "backwaters",
+      "houseboat",
+      "nature",
+      "serene"
+    ],
+    "featured": true,
+    "visit_duration": "1-2 days"
+  },
+  {
+    "id": 3,
+    "name": "Goa Beaches",
+    "city": "Panaji",
+    "state": "Goa",
+    "country": "India",
+    "category": "beach",
+    "description": "Goa is famous for its pristine beaches, vibrant nightlife, and Portuguese colonial architecture. From the lively Baga and Calangute beaches in the north to the serene Palolem and Agonda in the south, Goa offers something for every traveler.",
+    "latitude": 15.2993,
+    "longitude": 74.124,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day",
+    "best_time": "November to February",
+    "rating": 4.6,
+    "review_count": 3150,
+    "images": [
+      "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80"
+    ],
+    "tags": [
+      "beach",
+      "party",
+      "nightlife",
+      "portuguese"
+    ],
+    "featured": true,
+    "visit_duration": "3-5 days"
+  },
+  {
+    "id": 4,
+    "name": "Manali",
+    "city": "Manali",
+    "state": "Himachal Pradesh",
+    "country": "India",
+    "category": "hill",
+    "description": "Nestled in the Beas River Valley, Manali is a high-altitude Himalayan resort town. It's a gateway for adventure sports like skiing, paragliding, and trekking. The snow-capped peaks, apple orchards, and Buddhist monasteries make it a paradise for nature lovers.",
+    "latitude": 32.2432,
+    "longitude": 77.1892,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day",
+    "best_time": "October to June",
+    "rating": 4.7,
+    "review_count": 2100,
+    "images": [
+      "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&q=80"
+    ],
+    "tags": [
+      "himalaya",
+      "snow",
+      "adventure",
+      "trekking"
+    ],
+    "featured": true,
+    "visit_duration": "4-6 days"
+  },
+  {
+    "id": 5,
+    "name": "Jaipur - Pink City",
+    "city": "Jaipur",
+    "state": "Rajasthan",
+    "country": "India",
+    "category": "heritage",
+    "description": "Known as the Pink City, Jaipur is the capital of Rajasthan and a treasure trove of magnificent forts, palaces, and temples. The Amber Fort, City Palace, and Hawa Mahal are architectural marvels that narrate tales of Rajputana grandeur and royal heritage.",
+    "latitude": 26.9124,
+    "longitude": 75.7873,
+    "entry_fee": 200,
+    "entry_fee_foreign": 500,
+    "timings": "9:00 AM - 5:00 PM",
+    "best_time": "October to March",
+    "rating": 4.6,
+    "review_count": 1850,
+    "images": [
+      "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80"
+    ],
+    "tags": [
+      "rajasthan",
+      "fort",
+      "palace",
+      "heritage",
+      "UNESCO"
+    ],
+    "featured": false,
+    "visit_duration": "2-3 days"
+  },
+  {
+    "id": 6,
+    "name": "Darjeeling",
+    "city": "Darjeeling",
+    "state": "West Bengal",
+    "country": "India",
+    "category": "hill",
+    "description": "Perched at 2,050 meters in the Eastern Himalayas, Darjeeling is famous worldwide for its tea plantations, the toy train (a UNESCO heritage site), and stunning views of Kanchenjunga, the world's third-highest peak. The sunrise view from Tiger Hill is breathtaking.",
+    "latitude": 27.041,
+    "longitude": 88.2663,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day",
+    "best_time": "March to May, September to November",
+    "rating": 4.5,
+    "review_count": 1340,
+    "images": [
+      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80"
+    ],
+    "tags": [
+      "tea",
+      "toy train",
+      "himalaya",
+      "sunrise",
+      "UNESCO"
+    ],
+    "featured": false,
+    "visit_duration": "3-4 days"
+  },
+  {
+    "id": 7,
+    "name": "Varanasi Ghats",
+    "city": "Varanasi",
+    "state": "Uttar Pradesh",
+    "country": "India",
+    "category": "heritage",
+    "description": "Varanasi, one of the world's oldest living cities, is the spiritual heart of India. The evening Ganga Aarti at Dashashwamedh Ghat is a mesmerizing ritual of fire, chanting, and devotion. The ghats along the sacred Ganges River are alive with pilgrims, sadhus, and ancient traditions.",
+    "latitude": 25.3176,
+    "longitude": 82.9739,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day (Aarti at 7 PM)",
+    "best_time": "October to March",
+    "rating": 4.6,
+    "review_count": 2200,
+    "images": [
+      "https://images.unsplash.com/photo-1561361058-c24cecae35ca?w=800&q=80"
+    ],
+    "tags": [
+      "spiritual",
+      "ganga",
+      "aarti",
+      "ancient",
+      "ghats"
+    ],
+    "featured": true,
+    "visit_duration": "2-3 days"
+  },
+  {
+    "id": 8,
+    "name": "Andaman Islands",
+    "city": "Port Blair",
+    "state": "Andaman & Nicobar",
+    "country": "India",
+    "category": "beach",
+    "description": "The Andaman Islands are an archipelago in the Bay of Bengal, renowned for crystal-clear turquoise waters, pristine coral reefs, and white sand beaches. Radhanagar Beach is consistently rated one of Asia's best beaches. Water sports like scuba diving and snorkeling reveal a vibrant underwater world.",
+    "latitude": 11.7401,
+    "longitude": 92.6586,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day",
+    "best_time": "October to May",
+    "rating": 4.8,
+    "review_count": 980,
+    "images": [
+      "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80"
+    ],
+    "tags": [
+      "island",
+      "coral",
+      "scuba",
+      "beach",
+      "pristine"
+    ],
+    "featured": false,
+    "visit_duration": "5-7 days"
+  },
+  {
+    "id": 9,
+    "name": "Agra Fort",
+    "city": "Agra",
+    "state": "Uttar Pradesh",
+    "country": "India",
+    "category": "heritage",
+    "description": "Agra Fort is a UNESCO World Heritage Site and was the main residence of the Mughal emperors until 1638. This massive red sandstone fort contains several fairy-tale palaces, including Jahangir Palace and Khas Mahal, towers and turrets, and the famous Musamman Burj where Shah Jahan was imprisoned.",
+    "latitude": 27.1795,
+    "longitude": 78.0211,
+    "entry_fee": 40,
+    "entry_fee_foreign": 600,
+    "timings": "6:00 AM - 6:00 PM",
+    "best_time": "October to March",
+    "rating": 4.5,
+    "review_count": 1560,
+    "images": [
+      "https://images.unsplash.com/photo-1570458436416-b8fcccfe883f?w=800&q=80"
+    ],
+    "tags": [
+      "UNESCO",
+      "mughal",
+      "fort",
+      "heritage"
+    ],
+    "featured": false,
+    "visit_duration": "2-3 hours"
+  },
+  {
+    "id": 10,
+    "name": "Mumbai - City of Dreams",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "country": "India",
+    "category": "city",
+    "description": "Mumbai, India's financial capital, is a city that never sleeps. From the iconic Gateway of India and Marine Drive to the bustling bazaars of Crawford Market and the glitzy Bandra-Worli Sea Link, Mumbai is a city of contrasts, energy, and endless stories.",
+    "latitude": 19.076,
+    "longitude": 72.8777,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day",
+    "best_time": "November to February",
+    "rating": 4.4,
+    "review_count": 3500,
+    "images": [
+      "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=800&q=80"
+    ],
+    "tags": [
+      "metro",
+      "bollywood",
+      "gateway",
+      "nightlife",
+      "food"
+    ],
+    "featured": true,
+    "visit_duration": "3-4 days"
+  },
+  {
+    "id": 11,
+    "name": "Fatehpur Sikri",
+    "city": "Fatehpur Sikri",
+    "state": "Uttar Pradesh",
+    "country": "India",
+    "category": "heritage",
+    "description": "Fatehpur Sikri was the short-lived capital of Akbar's Mughal Empire. This abandoned city of red sandstone is one of the best-preserved examples of Mughal architecture. The Buland Darwaza, the world's highest gateway, stands as testimony to Akbar's ambition.",
+    "latitude": 27.0945,
+    "longitude": 77.666,
+    "entry_fee": 40,
+    "entry_fee_foreign": 550,
+    "timings": "Sunrise to Sunset",
+    "best_time": "October to March",
+    "rating": 4.4,
+    "review_count": 890,
+    "images": [
+      "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80"
+    ],
+    "tags": [
+      "UNESCO",
+      "mughal",
+      "akbar",
+      "abandoned city"
+    ],
+    "featured": false,
+    "visit_duration": "3-4 hours"
+  },
+  {
+    "id": 12,
+    "name": "Coorg Coffee Country",
+    "city": "Madikeri",
+    "state": "Karnataka",
+    "country": "India",
+    "category": "nature",
+    "description": "Coorg, known as the Scotland of India, is a misty hill station famous for its coffee and spice plantations, lush forests, and rich Kodava culture. Abbey Falls, Raja's Seat, and Namdroling Monastery are among the many attractions in this verdant paradise.",
+    "latitude": 12.4244,
+    "longitude": 75.7382,
+    "entry_fee": 0,
+    "entry_fee_foreign": 0,
+    "timings": "Open all day",
+    "best_time": "October to March",
+    "rating": 4.5,
+    "review_count": 1120,
+    "images": [
+      "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=800&q=80"
+    ],
+    "tags": [
+      "coffee",
+      "hills",
+      "nature",
+      "misty",
+      "plantation"
+    ],
+    "featured": false,
+    "visit_duration": "2-3 days"
+  }
+]

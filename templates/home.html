@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Home – Smart Navigator{% endblock %}
+
+{% block content %}
+
+<!-- ─── Hero Search Section ───────────────────────────────── -->
+<section class="home-hero">
+  <div class="hero-content">
+    <h1 class="hero-title">
+      <span data-i18n="home_title1">Where do you want</span><br>
+      <span class="hero-accent" data-i18n="home_title2">to explore next?</span>
+    </h1>
+    <p class="hero-sub">{{ total_places }}+ destinations across India waiting to be discovered</p>
+
+    <div class="search-bar-wrap">
+      <div class="search-bar" id="searchBar">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          id="homeSearch"
+          placeholder="Search places, cities, states…" data-i18n-placeholder="search_placeholder"
+          autocomplete="off"
+          aria-label="Search destinations"
+        />
+        <button class="search-submit" id="searchSubmit" data-i18n="search_btn">Search</button>
+      </div>
+      <!-- Autocomplete Dropdown -->
+      <div class="autocomplete-dropdown" id="autocompleteDropdown" hidden></div>
+    </div>
+
+    <!-- Map search button -->
+    <div style="margin-top:8px;position:relative">
+      <button class="map-search-btn" onclick="window.location.href='/map'" id="mapSearchBtn">
+        🗺️ <span id="mapBtnText">Search on Map</span>
+      </button>
+    </div>
+
+    <!-- Quick chips -->
+    <div class="quick-chips">
+      <span class="chip-label" data-i18n="popular_label">Popular:</span>
+      <a href="/place/1" class="chip">Taj Mahal</a>
+      <a href="/place/3" class="chip">Goa</a>
+      <a href="/place/4" class="chip">Manali</a>
+      <a href="/place/7" class="chip">Varanasi</a>
+      <a href="/place/10" class="chip">Mumbai</a>
+    </div>
+  </div>
+
+  <!-- Hero decoration -->
+  <div class="hero-decoration" aria-hidden="true">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+  </div>
+</section>
+
+<!-- ─── Category Pills ────────────────────────────────────── -->
+<section class="categories-section">
+  <div class="section-container">
+    <div class="category-pills">
+      {% for cat in categories %}
+      <a href="/explore?category={{ cat.id }}" class="category-pill">
+        <span class="cat-icon">{{ cat.icon }}</span>
+        <span class="cat-name">{{ cat.name }}</span>
+        <span class="cat-count">{{ cat.count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ─── Featured Places ───────────────────────────────────── -->
+<section class="featured-section">
+  <div class="section-container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title" data-i18n="featured_title">Featured Places</h2>
+        <p class="section-sub" data-i18n="featured_sub">Hand-picked destinations for an unforgettable journey</p>
+      </div>
+      <a href="/explore" class="see-all-link" data-i18n="view_all">View all →</a>
+    </div>
+
+    <div class="places-grid" id="featuredGrid">
+      {% for place in featured_places %}
+      <a href="/place/{{ place.id }}" class="place-card" style="--delay: {{ loop.index0 * 0.08 }}s">
+        <div class="place-card-image">
+          {% if place.images and place.images[0].startswith('http') %}
+          <div class="place-card-img-bg" style="background-image:url('{{ place.images[0] }}');background-size:cover;background-position:center"></div>
+          {% else %}
+          <div class="place-card-img-bg cat-{{ place.category }}"></div>
+          {% endif %}
+          <div class="place-card-overlay">
+            <span class="place-category-badge">{{ place.category }}</span>
+          </div>
+          {% if current_user %}
+          <button class="save-btn {% if place.id in current_user.saved_places %}saved{% endif %}"
+                  data-place-id="{{ place.id }}"
+                  onclick="event.preventDefault(); toggleSave({{ place.id }}, this)"
+                  aria-label="Save place">
+            {% if place.id in current_user.saved_places %}❤️{% else %}🤍{% endif %}
+          </button>
+          {% endif %}
+        </div>
+        <div class="place-card-body">
+          <div class="place-card-meta">
+            <span class="place-city">📍 {{ place.city }}, {{ place.state }}</span>
+            <span class="place-rating">⭐ {{ place.rating }}</span>
+          </div>
+          <h3 class="place-card-name">{{ place.name }}</h3>
+          <p class="place-card-desc">{{ place.description[:100] }}…</p>
+          <div class="place-card-footer">
+            {% if place.entry_fee == 0 %}
+              <span class="place-fee free">Free Entry</span>
+            {% else %}
+              <span class="place-fee">₹{{ place.entry_fee }} entry</span>
+            {% endif %}
+            <span class="place-duration">⏱ {{ place.visit_duration }}</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ─── Explore by Category Sections ──────────────────────── -->
+<section class="category-showcase">
+  <div class="section-container">
+    <div class="showcase-grid">
+
+      <div class="showcase-card heritage-card" onclick="location.href='/explore?category=heritage'">
+        <div class="sc-overlay"></div>
+        <div class="sc-content">
+          <span class="sc-icon">🏛️</span>
+          <h3>Heritage & Monuments</h3>
+          <p>UNESCO sites, forts & palaces</p>
+          <span class="sc-arrow">→</span>
+        </div>
+      </div>
+
+      <div class="showcase-card nature-card" onclick="location.href='/explore?category=nature'">
+        <div class="sc-overlay"></div>
+        <div class="sc-content">
+          <span class="sc-icon">🌿</span>
+          <h3>Nature Escapes</h3>
+          <p>Backwaters, forests & wildlife</p>
+          <span class="sc-arrow">→</span>
+        </div>
+      </div>
+
+      <div class="showcase-card beach-card" onclick="location.href='/explore?category=beach'">
+        <div class="sc-overlay"></div>
+        <div class="sc-content">
+          <span class="sc-icon">🏖️</span>
+          <h3>Beach Paradises</h3>
+          <p>Coastlines, islands & coral reefs</p>
+          <span class="sc-arrow">→</span>
+        </div>
+      </div>
+
+      <div class="showcase-card hill-card" onclick="location.href='/explore?category=hill'">
+        <div class="sc-overlay"></div>
+        <div class="sc-content">
+          <span class="sc-icon">⛰️</span>
+          <h3>Hill Stations</h3>
+          <p>Himalayas, tea gardens & mist</p>
+          <span class="sc-arrow">→</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── Cost Calculator Teaser ────────────────────────────── -->
+<section class="calculator-teaser">
+  <div class="section-container">
+    <div class="calc-card" id="costCalcWidget">
+      <div class="calc-header">
+        <span class="calc-icon">🧮</span>
+        <div>
+          <h2 data-i18n="calc_title">Trip Cost Estimator</h2>
+          <p data-i18n="calc_sub">Plan your budget before you pack your bags</p>
+        </div>
+      </div>
+      <div class="calc-form">
+        <div class="calc-row">
+          <div class="calc-field">
+            <label data-i18n="calc_mode">Travel Mode</label>
+            <select id="calcMode">
+              <option value="flight">✈️ Flight</option>
+              <option value="train">🚂 Train</option>
+              <option value="bus">🚌 Bus</option>
+              <option value="cab">🚕 Cab</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label data-i18n="calc_people">Number of People</label>
+            <input type="number" id="calcPeople" value="2" min="1" max="20">
+          </div>
+          <div class="calc-field">
+            <label data-i18n="calc_days">Days of Stay</label>
+            <input type="number" id="calcDays" value="3" min="1" max="30">
+          </div>
+          <div class="calc-field">
+            <label data-i18n="calc_budget">Budget Type</label>
+            <select id="calcBudget">
+              <option value="budget">🏕️ Budget</option>
+              <option value="mid" selected>🏨 Mid-range</option>
+              <option value="luxury">🏰 Luxury</option>
+            </select>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="calculateCost()" data-i18n="calc_btn">Estimate Cost →</button>
+      </div>
+      <div class="calc-result" id="calcResult" hidden>
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/home.js"></script>
+{% endblock %}

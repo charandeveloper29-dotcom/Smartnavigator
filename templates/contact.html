@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+{% block title %}Contact Us – Smart Navigator{% endblock %}
+
+{% block extra_css %}
+<style>
+.contact-page { background: var(--fog); min-height: 100vh; }
+
+.contact-hero {
+  background: linear-gradient(135deg, #1A1614 0%, #3D3530 50%, #8B4513 100%);
+  padding: 72px 24px 56px;
+  text-align: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.contact-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(201,168,76,.2) 0%, transparent 60%);
+}
+.contact-hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 12px;
+  position: relative;
+}
+.contact-hero p {
+  color: rgba(255,255,255,.6);
+  font-size: 1.05rem;
+  position: relative;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.contact-body {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* Info cards */
+.contact-info-card {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+}
+.contact-info-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.contact-info-card > p {
+  color: var(--muted);
+  font-size: .9rem;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--fog-dark);
+}
+.contact-item:last-of-type { border-bottom: none; }
+.ci-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.ci-icon.phone   { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
+.ci-icon.email   { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); }
+.ci-icon.address { background: linear-gradient(135deg, #FFF8E1, #FFE082); }
+.ci-icon.hours   { background: linear-gradient(135deg, #F3E5F5, #E1BEE7); }
+
+.ci-label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; font-weight: 600; }
+.ci-value { font-size: .95rem; font-weight: 600; color: var(--ink); }
+.ci-value a { color: var(--gold-dark); text-decoration: none; }
+.ci-value a:hover { text-decoration: underline; }
+.ci-sub { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+
+/* Social row */
+.social-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.social-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all .2s;
+}
+.social-chip.whatsapp { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+.social-chip.gmail    { background: #FFEBEE; color: #C62828; border: 1px solid #EF9A9A; }
+.social-chip:hover    { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+
+/* Contact Form */
+.contact-form-card {
+  background: white;
+  border-radius: 20px;
+  padding: 36px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+}
+.contact-form-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+.contact-form-card > p {
+  color: var(--muted);
+  font-size: .9rem;
+  margin-bottom: 28px;
+}
+
+.cf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.cf-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.cf-group label { font-size: .83rem; font-weight: 600; color: var(--ink-soft); }
+.cf-group input, .cf-group select, .cf-group textarea {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: .93rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--fog);
+  outline: none;
+  transition: border-color .2s;
+}
+.cf-group input:focus, .cf-group select:focus, .cf-group textarea:focus {
+  border-color: var(--gold);
+  background: white;
+}
+.cf-group textarea { height: 120px; resize: vertical; }
+
+.send-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.send-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,.4); }
+.form-success {
+  text-align: center;
+  padding: 32px;
+  display: none;
+}
+.form-success-icon { font-size: 3.5rem; margin-bottom: 12px; }
+.form-success h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 8px; }
+.form-success p { color: var(--muted); }
+
+/* Map placeholder */
+.map-section { margin-top: 40px; }
+.map-section h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 16px; }
+.map-embed {
+  width: 100%;
+  height: 320px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,.1);
+  border: none;
+}
+
+/* FAQ */
+.faq-section { margin-top: 52px; }
+.faq-section h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin-bottom: 24px; text-align: center; }
+.faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.faq-item {
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.faq-q { font-weight: 700; font-size: .95rem; color: var(--ink); margin-bottom: 6px; }
+.faq-a { font-size: .87rem; color: var(--muted); line-height: 1.6; }
+
+@media (max-width: 768px) {
+  .contact-grid { grid-template-columns: 1fr; }
+  .cf-row { grid-template-columns: 1fr; }
+  .faq-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contact-page">
+
+  <!-- Hero -->
+  <div class="contact-hero">
+    <h1>📬 Contact Us</h1>
+    <p>We'd love to hear from you. Reach out for support, suggestions, or just to say hello!</p>
+  </div>
+
+  <div class="contact-body">
+    <div class="contact-grid">
+
+      <!-- ── Contact Info ── -->
+      <div>
+        <div class="contact-info-card">
+          <h2>Get in Touch</h2>
+          <p>Smart Navigator team is here to help you plan your perfect journey across India.</p>
+
+          <div class="contact-item">
+            <div class="ci-icon phone">📱</div>
+            <div>
+              <div class="ci-label">Phone / WhatsApp</div>
+              <div class="ci-value"><a href="tel:+917483767977">+91 7483767977</a></div>
+              <div class="ci-sub">Mon–Sat, 9 AM – 7 PM IST</div>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="ci-icon email">✉️</div>
+            <div>
+              <div class="ci-label">Email</div>
+              <div class="ci-value"><a href="mailto:keshavtej29@gmail.com">keshavtej29@gmail.com</a></div>
+              <div class="ci-sub">We respond within 24 hours</div>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="ci-icon address">📍</div>
+            <div>
+              <div class="ci-label">Location</div>
+              <div class="ci-value">India 🇮🇳</div>
+              <div class="ci-sub">Serving explorers across India</div>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="ci-icon hours">🕐</div>
+            <div>
+              <div class="ci-label">Support Hours</div>
+              <div class="ci-value">Mon – Sat: 9 AM – 7 PM</div>
+              <div class="ci-sub">Sunday: 10 AM – 4 PM IST</div>
+            </div>
+          </div>
+
+          <!-- Social quick links -->
+          <div class="social-row">
+            <a href="https://wa.me/917483767977?text=Hi%20Smart%20Navigator%20team!" target="_blank" class="social-chip whatsapp">
+              💬 WhatsApp Us
+            </a>
+            <a href="mailto:keshavtej29@gmail.com" class="social-chip gmail">
+              📧 Email Us
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Contact Form ── -->
+      <div>
+        <div class="contact-form-card">
+          <h2>Send a Message</h2>
+          <p>Fill in the form and we'll get back to you as soon as possible.</p>
+
+          <div id="contactFormEl">
+            <div class="cf-row">
+              <div class="cf-group">
+                <label>Your Name *</label>
+                <input type="text" id="cfName" placeholder="Arjun Sharma">
+              </div>
+              <div class="cf-group">
+                <label>Mobile Number *</label>
+                <input type="tel" id="cfPhone" placeholder="9876543210">
+              </div>
+            </div>
+            <div class="cf-group">
+              <label>Email Address</label>
+              <input type="email" id="cfEmail" placeholder="arjun@example.com">
+            </div>
+            <div class="cf-group">
+              <label>Subject *</label>
+              <select id="cfSubject">
+                <option value="">Select a topic…</option>
+                <option>Place Suggestion</option>
+                <option>Bug Report</option>
+                <option>Feature Request</option>
+                <option>Partnership / Collaboration</option>
+                <option>General Query</option>
+              </select>
+            </div>
+            <div class="cf-group">
+              <label>Message *</label>
+              <textarea id="cfMessage" placeholder="Tell us how we can help you…"></textarea>
+            </div>
+            <div id="cfError" style="color:#E74C3C;font-size:.85rem;margin-bottom:10px;min-height:18px"></div>
+            <button class="send-btn" onclick="sendMessage()">
+              <span id="sendBtnText">Send Message ✉️</span>
+            </button>
+          </div>
+
+          <!-- Success state -->
+          <div class="form-success" id="formSuccess">
+            <div class="form-success-icon">🎉</div>
+            <h3>Message Sent!</h3>
+            <p>Thank you for reaching out. We'll reply within 24 hours to your email or phone.</p>
+            <p style="margin-top:12px;font-size:.85rem;color:var(--muted)">Meanwhile, explore India's finest destinations →</p>
+            <a href="/explore" style="display:inline-block;margin-top:16px;padding:10px 24px;background:var(--gold);color:white;border-radius:8px;font-weight:600;text-decoration:none">Explore Places</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /contact-grid -->
+
+    <!-- Google Maps Embed -->
+    <div class="map-section">
+      <h2>📍 Find Us</h2>
+      <iframe
+        class="map-embed"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15544869.693634413!2d68.17665655!3d20.593683799999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30635ff06b92b791%3A0xd78c4fa1854213a6!2sIndia!5e0!3m2!1sen!2sin!4v1713000000000!5m2!1sen!2sin"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title="Smart Navigator India">
+      </iframe>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-grid">
+        <div class="faq-item">
+          <div class="faq-q">How do I add a new place?</div>
+          <div class="faq-a">Click "+ Add Place" in the navbar. Search any place worldwide — we automatically fetch its real photo from Wikipedia.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Is Smart Navigator free to use?</div>
+          <div class="faq-a">Yes! Smart Navigator is completely free. Explore, save, and review places without any charges.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">How does OTP verification work?</div>
+          <div class="faq-a">Enter your mobile number on the splash screen, receive a 6-digit OTP, and verify to create your account securely.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Can I suggest a place that's missing?</div>
+          <div class="faq-a">Absolutely! Use the "+ Add Place" feature to add any destination worldwide, or contact us with your suggestion.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">How are nearby places calculated?</div>
+          <div class="faq-a">We use the Haversine formula to calculate exact distances between GPS coordinates. You can filter by 20, 50, 100, or 500 km radius.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">How do I change my profile photo?</div>
+          <div class="faq-a">Go to Profile and hover over your avatar to see the camera icon. Click it to upload a photo from your device.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendMessage() {
+  const name    = document.getElementById('cfName').value.trim();
+  const phone   = document.getElementById('cfPhone').value.trim();
+  const subject = document.getElementById('cfSubject').value;
+  const message = document.getElementById('cfMessage').value.trim();
+  const errEl   = document.getElementById('cfError');
+
+  if (!name)    { errEl.textContent = 'Please enter your name'; return; }
+  if (!phone)   { errEl.textContent = 'Please enter your mobile number'; return; }
+  if (!subject) { errEl.textContent = 'Please select a subject'; return; }
+  if (!message || message.length < 10) { errEl.textContent = 'Please enter a message (min 10 characters)'; return; }
+
+  errEl.textContent = '';
+  const btn  = document.getElementById('sendBtnText');
+  btn.textContent = 'Sending…';
+
+  // In production, POST to a backend endpoint or email API
+  // For demo, we just simulate sending
+  setTimeout(() => {
+    document.getElementById('contactFormEl').style.display = 'none';
+    document.getElementById('formSuccess').style.display   = 'block';
+  }, 1500);
+}
+</script>
+{% endblock %}

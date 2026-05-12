@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Smart Navigator{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+  {% block extra_css %}{% endblock %}
+  <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+  <!-- lang.js loaded FIRST so translations work instantly -->
+  <script src="/static/js/lang.js"></script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a href="/home" class="nav-brand">
+      <span class="brand-icon">🧭</span>
+      <span class="brand-text">Smart <strong>Navigator</strong></span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="/home"                     class="nav-link {% if request.path=='/home' %}active{% endif %}"    data-i18n="nav_home">Home</a>
+      <a href="/explore"                  class="nav-link {% if request.path=='/explore' %}active{% endif %}" data-i18n="nav_explore">Explore</a>
+      <a href="/explore?category=heritage" class="nav-link" data-i18n="nav_heritage">Heritage</a>
+      <a href="/explore?category=nature"   class="nav-link" data-i18n="nav_nature">Nature</a>
+      <a href="/explore?category=beach"    class="nav-link" data-i18n="nav_beaches">Beaches</a>
+      <a href="/add-place"                class="nav-link nav-link-add" data-i18n="nav_add">+ Add Place</a>
+      <a href="/map"                         class="nav-link">🗺️ Map</a>
+      <a href="/contact"                    class="nav-link">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <!-- Language Switcher in navbar -->
+      <div class="nav-lang-switcher" id="navLangSwitcher">
+        <button class="lang-globe-btn" id="langGlobeBtn" onclick="toggleLangMenu()" title="Change language">🌐</button>
+        <div class="lang-dropdown" id="langDropdown" hidden>
+          <button class="lang-opt" data-lang="en"  onclick="setLang('en')">🇮🇳 English</button>
+          <button class="lang-opt" data-lang="hi"  onclick="setLang('hi')">हिन्दी</button>
+          <button class="lang-opt" data-lang="ta"  onclick="setLang('ta')">தமிழ்</button>
+          <button class="lang-opt" data-lang="te"  onclick="setLang('te')">తెలుగు</button>
+          <button class="lang-opt" data-lang="ml"  onclick="setLang('ml')">മലയാളം</button>
+          <button class="lang-opt" data-lang="kn"  onclick="setLang('kn')">ಕನ್ನಡ</button>
+        </div>
+      </div>
+      {% if current_user %}
+        <a href="/profile" class="nav-avatar" title="{{ current_user.name }}">
+          <span class="avatar-letter">{{ current_user.name[0].upper() }}</span>
+        </a>
+      {% else %}
+        <a href="/login" class="btn-nav-login" data-i18n="nav_signin">Sign In</a>
+      {% endif %}
+      <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for cat, msg in messages %}
+          <div class="flash flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="brand-icon">🧭</span>
+      <span>Smart Navigator</span>
+      <p data-i18n="footer_tagline">Discover India's finest destinations</p>
+    </div>
+    <div class="footer-links">
+      <div>
+        <h4 data-i18n="nav_explore">Explore</h4>
+        <a href="/explore?category=heritage" data-i18n="nav_heritage">Heritage</a>
+        <a href="/explore?category=nature"   data-i18n="nav_nature">Nature</a>
+        <a href="/explore?category=beach"    data-i18n="nav_beaches">Beaches</a>
+        <a href="/explore?category=hill"     data-i18n="cat_hill">Hills</a>
+        <a href="/explore?category=city"     data-i18n="cat_city">City</a>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <a href="/profile"  data-i18n="saved_places">Saved Places</a>
+        <a href="/add-place" data-i18n="nav_add">+ Add Place</a>
+        <a href="/login"    data-i18n="nav_signin">Sign In</a>
+        <a href="/contact">Contact Us</a>
+      </div>
+    </div>
+    <div class="footer-contact" style="margin-bottom:16px;padding:16px;background:rgba(255,255,255,.05);border-radius:10px;font-size:.85rem;display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+      <span>📱 <a href="tel:+917483767977" style="color:var(--gold-light)">+91 7483767977</a></span>
+      <span>✉️ <a href="mailto:keshavtej29@gmail.com" style="color:var(--gold-light)">keshavtej29@gmail.com</a></span>
+      <span>💬 <a href="https://wa.me/917483767977" target="_blank" style="color:var(--gold-light)">WhatsApp Us</a></span>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Smart Navigator · Built with ❤️ for travelers</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/static/js/main.js"></script>
+{% block extra_js %}{% endblock %}
+
+<script>
+/* ── Language switcher dropdown ── */
+function toggleLangMenu() {
+  const dd = document.getElementById('langDropdown');
+  dd.hidden = !dd.hidden;
+}
+function setLang(lang) {
+  applyTranslation(lang);
+  document.querySelectorAll('.lang-opt').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang));
+  document.getElementById('langDropdown').hidden = true;
+}
+// Mark current lang active on load
+document.addEventListener('DOMContentLoaded', () => {
+  const cur = localStorage.getItem('sn_lang') || 'en';
+  document.querySelectorAll('.lang-opt').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === cur));
+});
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#navLangSwitcher'))
+    document.getElementById('langDropdown').hidden = true;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% block title %}Add a Place – Smart Navigator{% endblock %}
+
+{% block content %}
+
+<section class="add-place-hero">
+  <div class="section-container">
+    <div class="aph-content">
+      <span class="aph-icon">🗺️</span>
+      <div>
+        <h1>Add Any Place</h1>
+        <p>Search any place in the world — we'll fetch its real photo automatically from Wikipedia</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="add-place-layout">
+  <div class="section-container">
+    
+    <!-- Search Bar -->
+    <div class="search-section">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="placeSearch" placeholder="Type any place — Taj Mahal, Goa, Hampi, Paris..." autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    <div id="searchResults" class="search-results"></div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.add-place-hero{
+  background:linear-gradient(135deg,#1A1614 0%,#3D3530 100%);
+  padding:48px 24px;
+  color:white;
+}
+.aph-content{display:flex;align-items:center;gap:20px}
+.aph-icon{font-size:3rem}
+.aph-content h1{font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:6px}
+.aph-content p{color:rgba(255,255,255,.6);font-size:1rem}
+
+.add-place-layout{padding:40px 0 60px}
+
+/* Search */
+.search-section{max-width:700px;margin:0 auto 30px}
+.search-box{
+  display:flex;align-items:center;gap:12px;
+  background:white;border:2px solid #E8C97A;
+  border-radius:12px;padding:14px 20px;
+  box-shadow:0 4px 20px rgba(0,0,0,.08);
+}
+.search-icon{font-size:1.5rem}
+.search-box input{
+  flex:1;border:none;outline:none;
+  font-size:1.05rem;color:#1A1614;
+}
+.search-box input::placeholder{color:#999}
+
+/* Results */
+.search-results{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:20px;
+  max-width:1200px;
+  margin:0 auto;
+}
+.results-title{
+  grid-column:1/-1;
+  font-size:1.1rem;
+  font-weight:600;
+  color:#1A1614;
+  margin-bottom:10px;
+}
+.loading,.no-results,.error{
+  grid-column:1/-1;
+  text-align:center;
+  padding:40px;
+  font-size:1.1rem;
+  color:#888;
+}
+.error{color:#C0392B}
+
+/* Result Card */
+.result-card{
+  background:white;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.1);
+  transition:transform .2s,box-shadow .2s;
+  cursor:pointer;
+}
+.result-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 8px 24px rgba(0,0,0,.15);
+}
+.result-img{
+  height:180px;
+  background:#F0EBE3;
+  position:relative;
+  overflow:hidden;
+}
+.img-placeholder{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:3rem;
+  background:linear-gradient(135deg,#F0EBE3,#E8C97A);
+  transition:opacity .3s;
+}
+.img-loading{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:2rem;
+}
+.result-img img{
+  width:100%;height:100%;
+  object-fit:cover;
+}
+.result-info{padding:16px}
+.result-name{
+  font-family:'Playfair Display',serif;
+  font-size:1.15rem;
+  font-weight:700;
+  margin-bottom:6px;
+  color:#1A1614;
+}
+.result-location{
+  font-size:.85rem;
+  color:#666;
+  margin-bottom:4px;
+}
+.result-type{
+  font-size:.8rem;
+  color:#999;
+  margin-bottom:12px;
+}
+.add-btn{
+  width:100%;
+  background:linear-gradient(135deg,#C9A84C,#8B7355);
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  font-size:.95rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s;
+}
+.add-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(201,168,76,.4);
+}
+.add-btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+  transform:none;
+}
+
+@media(max-width:600px){
+  .search-results{grid-template-columns:1fr}
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let searchTimer;
+
+// Search input listener
+document.getElementById('placeSearch')?.addEventListener('input', (e) => {
+  clearTimeout(searchTimer);
+  const query = e.target.value.trim();
+  
+  if (query.length < 3) {
+    document.getElementById('searchResults').innerHTML = '';
+    return;
+  }
+  
+  searchTimer = setTimeout(() => searchPlace(query), 500);
+});
+
+// Search OpenStreetMap for places
+async function searchPlace(query) {
+  const results = document.getElementById('searchResults');
+  results.innerHTML = '<div class="loading">🔍 Searching...</div>';
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+                `q=${encodeURIComponent(query)}&format=json&limit=8` +
+                `&addressdetails=1&dedupe=1`;
+    
+    const res  = await fetch(url, { 
+      headers: { 'User-Agent': 'SmartNavigator/1.0' } 
+    });
+    const data = await res.json();
+
+    if (!data.length) {
+      results.innerHTML = '<div class="no-results">No places found. Try a different search term.</div>';
+      return;
+    }
+
+    results.innerHTML = '<div class="results-title">Found ' + data.length + ' places — select one to add:</div>';
+    
+    // Create cards and fetch Wikipedia images immediately
+    data.forEach((place, idx) => {
+      const addr = place.address || {};
+      const card = createResultCard(place, addr, idx);
+      results.appendChild(card);
+      
+      // Fetch Wikipedia image NOW
+      const placeName = place.display_name.split(',')[0].trim();
+      fetchWikipediaImage(placeName, idx);
+    });
+
+  } catch (e) {
+    console.error(e);
+    results.innerHTML = '<div class="error">⚠️ Search failed. Please try again.</div>';
+  }
+}
+
+// Create result card
+function createResultCard(place, addr, idx) {
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.dataset.idx = idx;
+  
+  const name     = place.display_name.split(',')[0].trim();
+  const city     = addr.city || addr.town || addr.village || addr.county || '';
+  const state    = addr.state || '';
+  const country  = addr.country || '';
+  const type     = place.type || place.class || 'place';
+  const lat      = place.lat;
+  const lon      = place.lon;
+
+  card.innerHTML = `
+    <div class="result-img" id="resultImg_${idx}">
+      <div class="img-placeholder">📍</div>
+      <div class="img-loading" style="display:none">⏳</div>
+    </div>
+    <div class="result-info">
+      <h3 class="result-name">${escHtml(name)}</h3>
+      <p class="result-location">📍 ${escHtml([city, state, country].filter(Boolean).join(', '))}</p>
+      <p class="result-type">${escHtml(type)}</p>
+      <button class="add-btn" onclick='addPlace(${JSON.stringify({idx, name, city, state, country, lat, lon, type})})'>
+        + Add This Place
+      </button>
+    </div>`;
+  
+  return card;
+}
+
+// Fetch Wikipedia image immediately
+async function fetchWikipediaImage(placeName, idx) {
+  const imgContainer = document.getElementById(`resultImg_${idx}`);
+  if (!imgContainer) return;
+
+  const placeholder = imgContainer.querySelector('.img-placeholder');
+  const loading     = imgContainer.querySelector('.img-loading');
+  
+  if (loading) loading.style.display = 'block';
+
+  try {
+    // Wikipedia API
+    const wikiUrl = `https://en.wikipedia.org/w/api.php?` +
+      `action=query&format=json&origin=*&prop=pageimages&piprop=thumbnail` +
+      `&pithumbsize=500&titles=${encodeURIComponent(placeName)}`;
+    
+    const res  = await fetch(wikiUrl);
+    const data = await res.json();
+    const pages = data.query?.pages || {};
+    const page  = Object.values(pages)[0];
+
+    if (page?.thumbnail?.source) {
+      // Image found!
+      const img = document.createElement('img');
+      img.src = page.thumbnail.source;
+      img.alt = placeName;
+      
+      img.onload = () => {
+        imgContainer.innerHTML = '';
+        imgContainer.appendChild(img);
+        
+        // Store image URL in card
+        const card = imgContainer.closest('.result-card');
+        if (card) card.dataset.imageUrl = page.thumbnail.source;
+      };
+      
+      img.onerror = () => {
+        if (loading) loading.style.display = 'none';
+      };
+    } else {
+      // No image
+      if (loading) loading.style.display = 'none';
+    }
+  } catch (e) {
+    console.error('Wiki fetch error:', e);
+    if (loading) loading.style.display = 'none';
+  }
+}
+
+// Add place to database with Wikipedia image
+async function addPlace(data) {
+  const card = document.querySelector(`.result-card[data-idx="${data.idx}"]`);
+  const btn  = card?.querySelector('.add-btn');
+  if (!btn) return;
+
+  btn.textContent = 'Adding...';
+  btn.disabled    = true;
+
+  // Get Wikipedia image URL from card
+  const imageUrl = card.dataset.imageUrl || '';
+  const category = guessCategory(data.type, data.name);
+
+  try {
+    const res = await fetch('/api/places/add', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        name:          data.name,
+        city:          data.city || data.state,
+        state:         data.state || data.country,
+        country:       data.country || 'India',
+        category,
+        description:   `${data.name} is a ${data.type} located in ${[data.city, data.state, data.country].filter(Boolean).join(', ')}.`,
+        latitude:      parseFloat(data.lat),
+        longitude:     parseFloat(data.lon),
+        entry_fee:     0,
+        visit_duration: 'Varies',
+        images:        imageUrl || '',
+      })
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.place) {
+      btn.textContent       = '✅ Added with Real Image!';
+      btn.style.background  = '#2D6A4F';
+      
+      // Redirect to place page
+      setTimeout(() => {
+        window.location.href = `/place/${result.place.id}`;
+      }, 1200);
+    } else {
+      btn.textContent = '❌ Retry';
+      btn.disabled    = false;
+      alert(result.error || 'Failed to add place');
+    }
+  } catch (e) {
+    console.error(e);
+    btn.textContent = '❌ Retry';
+    btn.disabled    = false;
+    alert('Network error. Please try again.');
+  }
+}
+
+// Guess category
+function guessCategory(type, name) {
+  const t = (type + ' ' + name).toLowerCase();
+  if (/beach|coast|bay|island/.test(t))         return 'beach';
+  if (/mountain|peak|hill|valley|forest|lake|river|waterfall|park|wildlife/.test(t)) return 'nature';
+  if (/fort|palace|temple|mosque|church|monument|ruins|museum|tomb/.test(t)) return 'heritage';
+  if (/hill.station|snow|trek/.test(t))          return 'hill';
+  if (/city|town|market/.test(t))                return 'city';
+  return 'heritage';
+}
+
+// Escape HTML
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+{% endblock %}

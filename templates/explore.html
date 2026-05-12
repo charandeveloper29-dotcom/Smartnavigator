@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Explore Places – Smart Navigator{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Quick Services Panel ────────────────────────────────── */
+.services-panel {
+  display: none;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.1);
+  margin: 16px 0 24px;
+  overflow: hidden;
+  border: 1px solid #F0EBE3;
+  animation: slideDown .3s ease;
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.services-panel.visible { display: block; }
+
+.sp-header {
+  background: linear-gradient(135deg, #1A1614, #3D3530);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sp-header-left { display:flex; align-items:center; gap:10px; }
+.sp-title { color: #E8C97A; font-weight: 700; font-size: 15px; }
+.sp-subtitle { color: rgba(255,255,255,.5); font-size: 12px; }
+.sp-close {
+  background: rgba(255,255,255,.1); border: none; color: white;
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; font-size: 14px; display:flex; align-items:center; justify-content:center;
+}
+
+.sp-body { padding: 16px 20px 20px; }
+
+/* Service category rows */
+.svc-category { margin-bottom: 18px; }
+.svc-category:last-child { margin-bottom: 0; }
+.svc-cat-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: #888; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+.svc-cat-title::after {
+  content: ''; flex: 1; height: 1px; background: #F0EBE3;
+}
+.svc-links {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.svc-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 14px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all .15s;
+  white-space: nowrap;
+  border: 1.5px solid transparent;
+}
+.svc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+.svc-btn img { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; }
+
+/* Transport */
+.svc-btn.ola      { background:#1A1A1A; color:white; }
+.svc-btn.uber     { background:#000; color:white; }
+.svc-btn.rapido   { background:#FFD600; color:#1A1A1A; }
+.svc-btn.redbus   { background:#D84315; color:white; }
+.svc-btn.irctc    { background:#1565C0; color:white; }
+
+/* Food */
+.svc-btn.swiggy   { background:#FC8019; color:white; }
+.svc-btn.zomato   { background:#E23744; color:white; }
+.svc-btn.dunzo    { background:#00C853; color:white; }
+.svc-btn.dominos  { background:#006491; color:white; }
+.svc-btn.blinkit  { background:#F9D41A; color:#1A1A1A; }
+
+/* Medical */
+.svc-btn.pharmeasy { background:#4CAF50; color:white; }
+.svc-btn.netmeds   { background:#2196F3; color:white; }
+.svc-btn.tata1mg   { background:#E53935; color:white; }
+.svc-btn.apollo    { background:#0D47A1; color:white; }
+.svc-btn.ambulance { background:#E53935; color:white; animation: pulse 1.5s infinite; }
+
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(229,57,53,.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(229,57,53,0); }
+}
+
+/* Responsive */
+@media (max-width:600px) {
+  .svc-btn { padding: 7px 11px; font-size: 12px; }
+  .sp-body { padding: 12px 14px 16px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="explore-hero">
+  <div class="section-container">
+    <h1 class="explore-title" data-i18n="explore_title">Explore <span class="accent" data-i18n="explore_accent">Destinations</span></h1>
+    <p class="explore-sub" data-i18n="explore_sub">Discover India's most incredible places</p>
+    <div class="explore-search-bar">
+      <span>🔍</span>
+      <input type="text" id="exploreSearch"
+             placeholder="Search any place in India — village, forest, mountain…"
+             autocomplete="off"/>
+    </div>
+  </div>
+</section>
+
+<!-- Category Tabs -->
+<div class="explore-category-tabs">
+  <div class="section-container">
+    <div class="cat-tabs" id="catTabs">
+      <button class="cat-tab {% if active_category == 'all' %}active{% endif %}" data-cat="all">🌍 All</button>
+      <button class="cat-tab {% if active_category == 'heritage' %}active{% endif %}" data-cat="heritage">🏛️ Heritage</button>
+      <button class="cat-tab {% if active_category == 'nature' %}active{% endif %}" data-cat="nature">🌿 Nature</button>
+      <button class="cat-tab {% if active_category == 'beach' %}active{% endif %}" data-cat="beach">🏖️ Beach</button>
+      <button class="cat-tab {% if active_category == 'hill' %}active{% endif %}" data-cat="hill">⛰️ Hills</button>
+      <button class="cat-tab {% if active_category == 'city' %}active{% endif %}" data-cat="city">🏙️ City</button>
+    </div>
+  </div>
+</div>
+
+<!-- Places Grid -->
+<section class="explore-grid-section">
+  <div class="section-container">
+
+    <!-- ═══ QUICK SERVICES PANEL ═══ -->
+    <div class="services-panel" id="servicesPanel">
+      <div class="sp-header">
+        <div class="sp-header-left">
+          <span style="font-size:20px">⚡</span>
+          <div>
+            <div class="sp-title">Quick Services near <span id="spPlaceName">this place</span></div>
+            <div class="sp-subtitle">Tap any service to open it for your destination</div>
+          </div>
+        </div>
+        <button class="sp-close" onclick="closeServices()">✕</button>
+      </div>
+
+      <div class="sp-body">
+
+        <!-- 🚗 TRAVEL / RIDE -->
+        <div class="svc-category">
+          <div class="svc-cat-title">🚗 Ride & Travel</div>
+          <div class="svc-links">
+            <a id="svc-ola"    class="svc-btn ola"    href="#" target="_blank">🟡 Ola</a>
+            <a id="svc-uber"   class="svc-btn uber"   href="#" target="_blank">⚫ Uber</a>
+            <a id="svc-rapido" class="svc-btn rapido"  href="#" target="_blank">⚡ Rapido</a>
+            <a id="svc-redbus" class="svc-btn redbus"  href="#" target="_blank">🚌 RedBus</a>
+            <a id="svc-irctc"  class="svc-btn irctc"   href="#" target="_blank">🚂 IRCTC</a>
+          </div>
+        </div>
+
+        <!-- 🍔 FOOD DELIVERY -->
+        <div class="svc-category">
+          <div class="svc-cat-title">🍔 Food Delivery</div>
+          <div class="svc-links">
+            <a id="svc-swiggy"  class="svc-btn swiggy"   href="#" target="_blank">🧡 Swiggy</a>
+            <a id="svc-zomato"  class="svc-btn zomato"   href="#" target="_blank">❤️ Zomato</a>
+            <a id="svc-dunzo"   class="svc-btn dunzo"    href="#" target="_blank">💚 Dunzo</a>
+            <a id="svc-dominos" class="svc-btn dominos"  href="#" target="_blank">🍕 Domino's</a>
+            <a id="svc-blinkit" class="svc-btn blinkit"  href="#" target="_blank">⚡ Blinkit</a>
+          </div>
+        </div>
+
+        <!-- 💊 MEDICAL / EMERGENCY -->
+        <div class="svc-category">
+          <div class="svc-cat-title">💊 Medical & Emergency</div>
+          <div class="svc-links">
+            <a id="svc-pharmeasy" class="svc-btn pharmeasy" href="#" target="_blank">💊 PharmEasy</a>
+            <a id="svc-netmeds"   class="svc-btn netmeds"   href="#" target="_blank">💙 Netmeds</a>
+            <a id="svc-tata1mg"   class="svc-btn tata1mg"   href="#" target="_blank">❤️ 1mg</a>
+            <a id="svc-apollo"    class="svc-btn apollo"    href="#" target="_blank">🏥 Apollo</a>
+            <a id="svc-ambulance" class="svc-btn ambulance" href="tel:108" target="_blank">🚨 Call 108</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /services-panel -->
+
+    <div class="explore-toolbar">
+      <span id="placeCount" class="place-count-label">Loading…</span>
+    </div>
+
+    <div class="places-grid" id="exploreGrid">
+      {% for i in range(9) %}
+      <div class="place-card skeleton">
+        <div class="place-card-image skeleton-img"></div>
+        <div class="place-card-body">
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line long"></div>
+          <div class="skeleton-line medium"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+
+    <div class="add-place-cta">
+      <div class="apc-inner">
+        <span class="apc-icon">🗺️</span>
+        <div>
+          <h3>Can't find a place?</h3>
+          <p>Add any place in the world — we'll fetch its real image automatically from Wikipedia</p>
+        </div>
+        <a href="/add-place" class="apc-btn">+ Add a Place</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const INITIAL_CATEGORY = "{{ active_category }}";
+
+// ── Show services panel when user searches ────────────
+function showServices(placeName) {
+  const panel = document.getElementById('servicesPanel');
+  const nameEl = document.getElementById('spPlaceName');
+  if (nameEl) nameEl.textContent = placeName || 'this place';
+
+  // Build location-aware links
+  const encoded = encodeURIComponent(placeName + ' India');
+  const encCity = encodeURIComponent(placeName);
+
+  // 🚗 Ride & Travel
+  document.getElementById('svc-ola').href    = `https://olawebsite.com/`;
+  document.getElementById('svc-uber').href   = `https://m.uber.com/looking?drop[0][addressLine1]=${encoded}`;
+  document.getElementById('svc-rapido').href = `https://rapido.bike/`;
+  document.getElementById('svc-redbus').href = `https://www.redbus.in/bus-tickets/${encCity.toLowerCase()}`;
+  document.getElementById('svc-irctc').href  = `https://www.irctc.co.in/nget/train-search`;
+
+  // 🍔 Food Delivery
+  document.getElementById('svc-swiggy').href  = `https://www.swiggy.com/city/${encCity.toLowerCase()}`;
+  document.getElementById('svc-zomato').href  = `https://www.zomato.com/${encCity.toLowerCase()}`;
+  document.getElementById('svc-dunzo').href   = `https://www.dunzo.com/`;
+  document.getElementById('svc-dominos').href = `https://www.dominos.co.in/`;
+  document.getElementById('svc-blinkit').href = `https://blinkit.com/`;
+
+  // 💊 Medical
+  document.getElementById('svc-pharmeasy').href = `https://pharmeasy.in/`;
+  document.getElementById('svc-netmeds').href   = `https://www.netmeds.com/`;
+  document.getElementById('svc-tata1mg').href   = `https://www.1mg.com/`;
+  document.getElementById('svc-apollo').href    = `https://www.apollopharmacy.in/`;
+
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeServices() {
+  document.getElementById('servicesPanel').classList.remove('visible');
+}
+</script>
+<script src="/static/js/explore.js"></script>
+{% endblock %}

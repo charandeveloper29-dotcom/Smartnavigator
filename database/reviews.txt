@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "place_id": 1,
+    "user_id": 1,
+    "user_name": "Arjun Sharma",
+    "rating": 5,
+    "title": "Absolutely Breathtaking",
+    "content": "Words cannot describe the beauty of Taj Mahal. Visited at sunrise and the golden light on the white marble was magical. A must-visit for everyone.",
+    "created_at": "2024-03-10T08:30:00",
+    "helpful_count": 24
+  },
+  {
+    "id": 2,
+    "place_id": 1,
+    "user_id": 2,
+    "user_name": "Priya Nair",
+    "rating": 5,
+    "title": "A Monument to Eternal Love",
+    "content": "Visiting the Taj Mahal was the highlight of our India trip. The symmetry and craftsmanship are incredible. Book tickets in advance to avoid long queues.",
+    "created_at": "2024-03-15T14:20:00",
+    "helpful_count": 18
+  },
+  {
+    "id": 3,
+    "place_id": 2,
+    "user_id": 1,
+    "user_name": "Arjun Sharma",
+    "rating": 5,
+    "title": "Serenity at its Best",
+    "content": "The Kerala backwaters are unlike anything else in the world. Our houseboat cruise was peaceful and the food was fantastic. Highly recommended!",
+    "created_at": "2024-04-05T09:15:00",
+    "helpful_count": 31
+  },
+  {
+    "id": 4,
+    "place_id": 3,
+    "user_id": 2,
+    "user_name": "Priya Nair",
+    "rating": 4,
+    "title": "Fun but Crowded",
+    "content": "Goa is always a great time but can get very crowded in peak season. We prefer the southern beaches like Palolem for a quieter experience. Great food and nightlife!",
+    "created_at": "2024-01-20T19:45:00",
+    "helpful_count": 15
+  },
+  {
+    "id": 5,
+    "place_id": 4,
+    "user_id": 1,
+    "user_name": "Arjun Sharma",
+    "rating": 5,
+    "title": "Heaven on Earth",
+    "content": "Manali in winter is absolutely stunning. The snow-capped mountains, the crisp air, and the warm hospitality make it a perfect getaway. Rohtang Pass was spectacular!",
+    "created_at": "2024-02-08T16:30:00",
+    "helpful_count": 42
+  },
+  {
+    "id": 6,
+    "place_id": 10,
+    "user_id": 2,
+    "user_name": "Priya Nair",
+    "rating": 4,
+    "title": "The City that Never Sleeps",
+    "content": "Mumbai is chaotic and beautiful at the same time. The food scene is incredible - from street vada pav to fine dining. Marine Drive at night is magical.",
+    "created_at": "2024-03-28T21:00:00",
+    "helpful_count": 27
+  }
+]

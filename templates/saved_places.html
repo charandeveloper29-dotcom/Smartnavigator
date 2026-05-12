@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Saved Places – Smart Navigator{% endblock %}
+
+{% block content %}
+
+<section class="saved-hero">
+  <div class="section-container">
+    <h1>❤️ Saved Places</h1>
+    <p>Your favorite destinations</p>
+  </div>
+</section>
+
+<section class="saved-content">
+  <div class="section-container">
+    {% if saved_places %}
+      <div class="places-grid">
+        {% for place in saved_places %}
+          <a href="/place/{{ place.id }}" class="place-card">
+            <div class="place-image">
+              {% if place.images %}
+                <img src="{{ place.images }}" alt="{{ place.name }}">
+              {% else %}
+                <div class="place-placeholder">📍</div>
+              {% endif %}
+            </div>
+            <div class="place-info">
+              <h3>{{ place.name }}</h3>
+              <p>{{ place.city }}, {{ place.state }}</p>
+              <span class="rating">⭐ {{ place.rating }}</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🗺️</div>
+        <h2>No Saved Places Yet</h2>
+        <p>Start exploring and save your favorite destinations!</p>
+        <a href="/explore" class="btn-explore">Explore Places</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.saved-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 60px 24px;
+  text-align: center;
+  color: white;
+}
+
+.saved-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.saved-content {
+  padding: 40px 24px;
+  background: #f8f9fa;
+}
+
+.places-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.place-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.place-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+}
+
+.place-image {
+  height: 200px;
+  background: #f0ebe3;
+}
+
+.place-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.place-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  background: linear-gradient(135deg, #f0ebe3, #e8c97a);
+}
+
+.place-info {
+  padding: 20px;
+}
+
+.place-info h3 {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+  color: #1A1614;
+}
+
+.place-info p {
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.rating {
+  display: inline-block;
+  background: #fff3cd;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 6rem;
+  margin-bottom: 24px;
+  opacity: 0.3;
+}
+
+.empty-state h2 {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  color: #1A1614;
+}
+
+.empty-state p {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 1.1rem;
+}
+
+.btn-explore {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 24px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-explore:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+</style>
+{% endblock %}

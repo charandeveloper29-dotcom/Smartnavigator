@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Search Results – Smart Navigator{% endblock %}
+{% block content %}
+<section class="search-results-page">
+  <div class="section-container">
+    <div class="search-results-header">
+      <h1>Search Results</h1>
+      {% if query %}
+        <p>{{ results|length }} result{% if results|length != 1 %}s{% endif %} for "<strong>{{ query }}</strong>"</p>
+      {% else %}
+        <p>Enter a search term above to discover places</p>
+      {% endif %}
+    </div>
+
+    {% if results %}
+      <div class="places-grid">
+        {% for place in results %}
+        <a href="/place/{{ place.id }}" class="place-card">
+          <div class="place-card-image">
+            {% if place.images and place.images[0].startswith('http') %}
+            <div class="place-card-img-bg" style="background-image:url('{{ place.images[0] }}');background-size:cover;background-position:center"></div>
+            {% else %}
+            <div class="place-card-img-bg cat-{{ place.category }}"></div>
+            {% endif %}
+            <div class="place-card-overlay">
+              <span class="place-category-badge">{{ place.category }}</span>
+            </div>
+          </div>
+          <div class="place-card-body">
+            <div class="place-card-meta">
+              <span class="place-city">📍 {{ place.city }}, {{ place.state }}</span>
+              <span class="place-rating">⭐ {{ place.rating }}</span>
+            </div>
+            <h3 class="place-card-name">{{ place.name }}</h3>
+            <p class="place-card-desc">{{ place.description[:100] }}…</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    {% elif query %}
+      <div class="no-results">
+        <div class="no-results-icon">🔍</div>
+        <h2>No places found</h2>
+        <p>Try a different keyword like "beach", "heritage", "Goa" or "Taj"</p>
+        <a href="/explore" class="explore-cta-btn">Browse All Places →</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
