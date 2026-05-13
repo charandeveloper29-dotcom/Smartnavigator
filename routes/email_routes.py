@@ -22,17 +22,13 @@ def send_otp():
     if not email or '@' not in email:
         return jsonify({'error': 'Valid email address is required'}), 400
 
-    # For register: check not already registered
     if purpose == 'register' and get_user_by_email(email):
         return jsonify({'error': 'This email is already registered. Please sign in.'}), 409
 
-    # Generate and store OTP
     otp = generate_otp()
     store_email_otp(email, otp, purpose=purpose)
 
-    # Send via Gmail SMTP
     success, message = send_otp_email(email, otp, user_name=name)
-
     if not success:
         return jsonify({'error': message}), 500
 
@@ -56,41 +52,40 @@ def verify_otp():
     if not name and purpose == 'register':
         return jsonify({'error': 'Name is required'}), 400
 
-    # Verify OTP
     result = check_email_otp(email, otp, purpose=purpose)
     if not result['valid']:
-        # Before
-     return jsonify({'error': result['message']}), 400
+        return jsonify({'error': result.get('error', 'OTP verification failed')}), 400
 
-# After
-    return jsonify({'error': result['error']}), 400
+    if purpose == 'register':
+        if get_user_by_email(email):
+            return jsonify({'error': 'Email already registered. Please sign in.'}), 409
 
-    # Create account
-    if get_user_by_email(email):
-        return jsonify({'error': 'Email already registered. Please sign in.'}), 409
+        user = db_insert('users', {
+            'name':         name,
+            'email':        email,
+            'phone':        '',
+            'password':     hash_password(secrets.token_urlsafe(16)),
+            'avatar':       '',
+            'avatar_url':   '',
+            'bio':          '',
+            'otp_verified': True,
+        })
 
-    user = db_insert('users', {
-        'name':         name,
-        'email':        email,
-        'phone':        '',
-        'password':     hash_password(secrets.token_urlsafe(16)),
-        'avatar':       '',
-        'avatar_url':   '',
-        'bio':          '',
-        'otp_verified': True,
-    })
+        if not user:
+            return jsonify({'error': 'Account creation failed. Please try again.'}), 500
 
-    if not user:
-        return jsonify({'error': 'Account creation failed. Please try again.'}), 500
+    else:
+        user = get_user_by_email(email)
+        if not user:
+            return jsonify({'error': 'No account found for this email.'}), 404
 
-    # Auto-login
     session['user_id'] = user['id']
     session.permanent  = True
     token = create_token(user['id'], user['email'])
 
     resp = make_response(jsonify({
         'success':  True,
-        'message':  f'Welcome to Smart Navigator, {name}!',
+        'message':  f'Welcome to Smart Navigator, {name or user.get("name", "")}!',
         'user':     {'id': user['id'], 'name': user['name'], 'email': user['email']},
         'redirect': '/home'
     }))

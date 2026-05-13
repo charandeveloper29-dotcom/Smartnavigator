@@ -16,24 +16,34 @@ def get_db():
 
 def init_db(db_path):
     """Initialize database with schema"""
-    # Create direct connection (don't use get_db during init)
     db = sqlite3.connect(db_path)
     db.row_factory = sqlite3.Row
-    
-    # Create users table
+
     db.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             phone TEXT,
+            password TEXT,
+            avatar TEXT,
             avatar_url TEXT,
             bio TEXT,
+            otp_verified INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    
-    # Create places table
+
+    # Add missing columns to existing users table if they don't exist
+    existing_columns = [row[1] for row in db.execute('PRAGMA table_info(users)').fetchall()]
+    for col, definition in [
+        ('password',     'TEXT'),
+        ('avatar',       'TEXT'),
+        ('otp_verified', 'INTEGER DEFAULT 0'),
+    ]:
+        if col not in existing_columns:
+            db.execute(f'ALTER TABLE users ADD COLUMN {col} {definition}')
+
     db.execute('''
         CREATE TABLE IF NOT EXISTS places (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,8 +66,7 @@ def init_db(db_path):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    
-    # Create saved_places table
+
     db.execute('''
         CREATE TABLE IF NOT EXISTS saved_places (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,8 +78,7 @@ def init_db(db_path):
             UNIQUE(user_id, place_id)
         )
     ''')
-    
-    # Create reviews table
+
     db.execute('''
         CREATE TABLE IF NOT EXISTS reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,24 +91,23 @@ def init_db(db_path):
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
-    
-    # Create otp_sessions table
-    # Create otp_sessions table
+
     db.execute('''
-    CREATE TABLE IF NOT EXISTS otp_sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT NOT NULL,
-        otp TEXT NOT NULL,
-        purpose TEXT DEFAULT 'register',
-        attempts INTEGER DEFAULT 0,
-        expires_at TIMESTAMP NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')    
-    
+        CREATE TABLE IF NOT EXISTS otp_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            otp TEXT NOT NULL,
+            purpose TEXT DEFAULT 'register',
+            attempts INTEGER DEFAULT 0,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     db.commit()
     db.close()
     print('[DB] SQLite database initialized → database/smart_navigator.db')
+
 
 # ==================== CRUD Operations ====================
 
@@ -117,14 +124,15 @@ def db_get_by_id(table, id):
     return dict(row) if row else None
 
 def db_insert(table, data):
-    """Insert a new row"""
+    """Insert a new row and return the full inserted row as a dict"""
     db = get_db()
     columns = ', '.join(data.keys())
     placeholders = ', '.join(['?' for _ in data])
     query = f'INSERT INTO {table} ({columns}) VALUES ({placeholders})'
     cursor = db.execute(query, list(data.values()))
     db.commit()
-    return cursor.lastrowid
+    row = db.execute(f'SELECT * FROM {table} WHERE id = ?', (cursor.lastrowid,)).fetchone()
+    return dict(row) if row else None
 
 def db_update(table, id, data):
     """Update row by ID"""
@@ -141,11 +149,12 @@ def db_find_by(table, column, value):
     return [dict(row) for row in rows]
 
 def db_execute(query, params=()):
-    """Execute a query"""
+    """Execute a raw query"""
     db = get_db()
     cursor = db.execute(query, params)
     db.commit()
     return cursor
+
 
 # ==================== User Functions ====================
 
@@ -161,14 +170,15 @@ def get_user_by_phone(phone):
     row = db.execute('SELECT * FROM users WHERE phone = ?', (phone,)).fetchone()
     return dict(row) if row else None
 
+
 # ==================== Places Functions ====================
 
 def search_places(query):
-    """Search places by name, city, state"""
+    """Search places by name, city, state, description"""
     db = get_db()
     search_term = f'%{query}%'
     rows = db.execute('''
-        SELECT * FROM places 
+        SELECT * FROM places
         WHERE name LIKE ? OR city LIKE ? OR state LIKE ? OR description LIKE ?
         ORDER BY rating DESC
         LIMIT 20
@@ -179,7 +189,7 @@ def get_places_paginated(page=1, per_page=9, category='all'):
     """Get paginated places"""
     db = get_db()
     offset = (page - 1) * per_page
-    
+
     if category == 'all':
         rows = db.execute(
             'SELECT * FROM places ORDER BY rating DESC LIMIT ? OFFSET ?',
@@ -195,15 +205,16 @@ def get_places_paginated(page=1, per_page=9, category='all'):
             'SELECT COUNT(*) as count FROM places WHERE category = ?',
             (category,)
         ).fetchone()['count']
-    
+
+    total_pages = math.ceil(total / per_page) if total > 0 else 0
     return {
-        'items': [dict(row) for row in rows],
-        'total': total,
-        'page': page,
+        'items':    [dict(row) for row in rows],
+        'total':    total,
+        'page':     page,
         'per_page': per_page,
-        'pages': math.ceil(total / per_page) if total > 0 else 0,
+        'pages':    total_pages,
         'has_prev': page > 1,
-        'has_next': page < math.ceil(total / per_page) if total > 0 else False
+        'has_next': page < total_pages,
     }
 
 def update_place_rating(place_id):
@@ -213,13 +224,14 @@ def update_place_rating(place_id):
         'SELECT AVG(rating) as avg_rating FROM reviews WHERE place_id = ?',
         (place_id,)
     ).fetchone()
-    
+
     if avg and avg['avg_rating']:
         db.execute(
             'UPDATE places SET rating = ? WHERE id = ?',
             (round(avg['avg_rating'], 1), place_id)
         )
         db.commit()
+
 
 # ==================== Saved Places Functions ====================
 
@@ -236,7 +248,7 @@ def toggle_saved_place(user_id, place_id):
         'SELECT id FROM saved_places WHERE user_id = ? AND place_id = ?',
         (user_id, place_id)
     ).fetchone()
-    
+
     if existing:
         db.execute('DELETE FROM saved_places WHERE user_id = ? AND place_id = ?', (user_id, place_id))
         db.commit()

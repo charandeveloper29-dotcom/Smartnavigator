@@ -58,18 +58,16 @@ def send_otp_email(to_email, otp, user_name=''):
             server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
             server.send_message(msg)
 
-        # FIX 1: return a tuple instead of a plain bool
         return True, 'OTP sent successfully'
 
     except Exception as e:
         print(f'Email send failed: {e}')
-        # FIX 1: return a tuple instead of re-raising
         return False, str(e)
 
 def store_email_otp(email, otp, purpose='register'):
     """Store OTP in database"""
     db = get_db()
-    expires_at = datetime.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+    expires_at = (datetime.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)).strftime('%Y-%m-%d %H:%M:%S')
     db.execute('DELETE FROM otp_sessions WHERE email = ?', (email,))
     db.execute(
         'INSERT INTO otp_sessions (email, otp, purpose, attempts, expires_at) VALUES (?, ?, ?, 0, ?)',
@@ -77,7 +75,18 @@ def store_email_otp(email, otp, purpose='register'):
     )
     db.commit()
 
-# FIX 2: removed duplicate check_email_otp — keep only this one (with purpose param)
+def _parse_expires_at(raw):
+    """Safely parse expires_at regardless of whether SQLite returns a str or datetime."""
+    if isinstance(raw, datetime):
+        return raw
+    raw = str(raw)
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f'):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f'Unrecognised expires_at format: {raw!r}')
+
 def check_email_otp(email, otp, purpose='register'):
     """Verify OTP"""
     db = get_db()
@@ -90,7 +99,13 @@ def check_email_otp(email, otp, purpose='register'):
         return {'valid': False, 'error': 'No OTP found'}
 
     session = dict(session)
-    expires_at = datetime.fromisoformat(session['expires_at'])
+
+    try:
+        expires_at = _parse_expires_at(session['expires_at'])
+    except ValueError as e:
+        print(f'expires_at parse error: {e}')
+        return {'valid': False, 'error': 'OTP session corrupted'}
+
     if datetime.now() > expires_at:
         return {'valid': False, 'error': 'OTP expired'}
 
